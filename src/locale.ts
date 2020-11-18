@@ -35,18 +35,18 @@ export function createLocale<T extends Dictionary>(dictionary: T) {
       });
     },
 
-    localize: <P extends { language: Language<T> }>(App: React.FC<P>) => {
+    localize: <P extends { }>(language: Language<T>, App: React.FC<P>) => {
       return (props: P) => {
         const [value, setLang] = useState<S>();
 
         const changeLanguage = useCallback(async (newLang: string) => {
-          const newDictionary = await props.language.set(newLang);
+          const newDictionary = await language.set(newLang);
           dictionaryHandler.fire(Object.assign({}, dictionary, newDictionary));
           setLang([newLang, changeLanguage]);
         }, []);
 
         useEffect(() => {
-          props.language.get().then(changeLanguage);
+          language.get().then(changeLanguage);
         }, []);
 
         return React.createElement(
