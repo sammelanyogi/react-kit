@@ -15,9 +15,9 @@ const dictionaries = {
   eng: defaultDictionary,
 };
 
-class Language {
+const language = {
   get: async () => {
-    return await getitem('language');
+    return await getItem('language');
   },
   set: async (lang: string) => {
     const dictionary = dictionaries[lang];
@@ -25,7 +25,7 @@ class Language {
     return dictionary;
   }
 }
-export const locale = Locale.create(dictionary);
+export const locale = createLocale(defaultDictionary);
 
 export function LanguageSelector() {
   const [language, changeLanguage] = locale.useLanguage();
@@ -37,7 +37,7 @@ export function LanguageSelector() {
   );
 }
 
-export const App = locale.localize(() => {
+export const App = locale.localize(language, () => {
   const { appName } = locale.dictionary;
 
   return (
