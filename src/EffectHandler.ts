@@ -1,7 +1,7 @@
 import React, { ReactNode, useContext, useEffect, useState } from "react";
 
 export class EffectHandler<T> {
-  private listeners: Array<(newValue: T) => void>;
+  private listeners: Array<(newValue: T) => void> = [];
   private lastValue?: T;
 
   constructor(initialValue?: T) {
