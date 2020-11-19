@@ -4,8 +4,8 @@
 
 ### Usage
 ```typescript
-import { getItem, setItem } from '@react-native-community/async-storage';
-import { createLocale } from '@bhoos/react';
+import AsyncStorage from '@react-native-community/async-storage';
+import { createLocale } from '@bhoos/react-kit';
 
 const defaultDictionary = {
   appName: 'Your App Name';
@@ -17,11 +17,15 @@ const dictionaries = {
 
 const language = {
   get: async () => {
-    return await getItem('language');
+    const lang = await AsyncStorage.getItem('language');
+    if (lang === null) {
+      return 'eng';
+    }
+    return lang;
   },
   set: async (lang: string) => {
     const dictionary = dictionaries[lang];
-    await setItem('language', lang);
+    await AsyncStorage.setItem('language', lang);
     return dictionary;
   }
 }
