@@ -12,7 +12,7 @@ export function useRouter() {
   return useContext(RouterContext);
 }
 
-export function useRouteConfirm(effect: ConfirmTransition) {
+export function useRouteExit(beforeExit: ConfirmTransition) {
   const router = useRouter();
-  useEffect(router.registerConfirm(effect), [effect]);
+  useEffect(router.registerConfirm(beforeExit), [beforeExit]);
 }
