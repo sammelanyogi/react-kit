@@ -1,19 +1,19 @@
-import React, { createContext, createElement, ReactPropTypes, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, createElement, FC, ReactPropTypes, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
-type ModalContent = React.FunctionComponent<any>;
+type Component<P extends {}> = React.FunctionComponent<P>;
 
-type Modal = {
-  show: (props: ReactPropTypes) => void;
+type Modal<P extends {}> = {
+  show: (props: P) => void;
   hide: () => void;
 };
 
 type Modals = Array<{
-  Modal: ModalContent;
-  props: ReactPropTypes;
+  component: Component<any>;
+  props: { key: string };
 }>;
 
 type ModalContextType = {
-  createModal: (Modal: ModalContent) => Modal,
+  createModal: <P extends {}>(Modal: Component<P>) => Modal<P>,
 };
 
 type ModalProviderPropsType = {
@@ -24,19 +24,17 @@ type ModalProviderPropsType = {
 
 const getUniqueId = () => Math.floor(Math.random() * 1000).toString();
 
-const ModalContext = createContext<ModalContextType>({
-  createModal: (Modal: ModalContent) => ({ show: (props: ReactPropTypes) => {}, hide: () => {}}),
-});
+const ModalContext = createContext<ModalContextType>(null);
 
 export const ModalProvider: React.FC<ModalProviderPropsType> = ({ children, ModalsContainerComponent = React.Fragment }) => {
   const [modals, setModals] = useState<Modals>([]);
 
-  const createModal = useCallback((Modal: ModalContent) => {
+  const createModal = useCallback(<P extends {}>(component: Component<P>) => {
     const key = getUniqueId();
     return {
-      show: (props: ReactPropTypes) => setModals(modals => {
+      show: (props: P = {} as P) => setModals(modals => {
         if (modals.length !== 0 && modals[modals.length-1].props.key === key) return modals;
-        return modals.filter(m => m.props.key === key).concat({ Modal, props: Object.assign(props, { key })});
+        return modals.filter(m => m.props.key === key).concat({ component, props: Object.assign({ key }, props)});
       }),
       hide: () => setModals(modals => {
         return modals.filter(m => m.props.key === key);
@@ -49,19 +47,19 @@ export const ModalProvider: React.FC<ModalProviderPropsType> = ({ children, Moda
   return <ModalContext.Provider value={contextValue}>
     {children}
     <ModalsContainerComponent>
-      {modals.map(({Modal, props}) => {
-        return createElement(Modal, props);
+      {modals.map(({ component, props}) => {
+        return createElement(component, props);
       })}
     </ModalsContainerComponent>
   </ModalContext.Provider>
 };
 
-export const useModal = (ModalContent: ModalContent): Modal => {
-  const modal = useRef<Modal>();
+export function useModal<P extends {}>(component: Component<P>): Modal<P> {
+  const modal = useRef<Modal<P>>();
   const controller = useContext(ModalContext);
 
   if (!modal.current) {
-    modal.current = controller.createModal(ModalContent);
+    modal.current = controller.createModal(component);
   }
 
   useEffect(() => modal.current.hide, []);
