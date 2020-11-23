@@ -1,4 +1,4 @@
-import React, { createContext, createElement, FC, ReactPropTypes, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, createElement, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 type Component<P extends {}> = React.FunctionComponent<P>;
 
@@ -18,7 +18,6 @@ type ModalContextType = {
 
 type ModalProviderPropsType = {
   children: React.ReactNode;
-  ModalsContainerComponent?: React.FC;
 };
 
 
@@ -26,7 +25,7 @@ const getUniqueId = () => Math.floor(Math.random() * 1000).toString();
 
 const ModalContext = createContext<ModalContextType>(null);
 
-export const ModalProvider: React.FC<ModalProviderPropsType> = ({ children, ModalsContainerComponent = React.Fragment }) => {
+export const ModalProvider: React.FC<ModalProviderPropsType> = ({ children = React.Fragment }) => {
   const [modals, setModals] = useState<Modals>([]);
 
   const createModal = useCallback(<P extends {}>(component: Component<P>) => {
@@ -46,11 +45,9 @@ export const ModalProvider: React.FC<ModalProviderPropsType> = ({ children, Moda
 
   return <ModalContext.Provider value={contextValue}>
     {children}
-    <ModalsContainerComponent>
-      {modals.map(({ component, props}) => {
-        return createElement(component, props);
-      })}
-    </ModalsContainerComponent>
+    {modals.map(({ component, props}) => {
+      return createElement(component, props);
+    })}
   </ModalContext.Provider>
 };
 
