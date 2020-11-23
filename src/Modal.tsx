@@ -36,7 +36,7 @@ export const ModalProvider: React.FC<ModalProviderPropsType> = ({ children, Moda
     return {
       show: (props: ReactPropTypes) => setModals(modals => {
         if (modals.length !== 0 && modals[modals.length-1].props.key === key) return modals;
-        return [...modals.filter(m => m.props.key === key), { Modal, props: { ...props, key }}];
+        return modals.filter(m => m.props.key === key).concat({ Modal, props: Object.assign(props, { key })});
       }),
       hide: () => setModals(modals => {
         return modals.filter(m => m.props.key === key);
