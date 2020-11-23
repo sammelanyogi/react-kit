@@ -7,6 +7,9 @@
   "scripts": {
     "build": "tsc"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "author": "Ranjan Shrestha",
   "license": "MIT",
   "devDependencies": {

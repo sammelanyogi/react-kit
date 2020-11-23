@@ -2,7 +2,7 @@
   "compileOnSave": true,
   "compilerOptions": {
     "target": "es2017",
-    "lib": ["es2017"],
+    "lib": ["es2017", "DOM"],
     "jsx": "react",
     "types": ["jest", "react"],
     "module": "commonjs",
