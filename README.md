@@ -7,3 +7,4 @@ React Components and Utilities for Application Development
    * [Locale](docs/Locale.md)
    * [Router](docs/Router.md)
    * [Modal](docs/Modal.md)
+   * [Form](docs/Form.md)
