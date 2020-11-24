@@ -14,7 +14,10 @@ export class EffectHandler<T> {
     if (value !== this.lastValue) {
       this.lastValue = value;
       this.listeners.forEach(l => l(value));
+      return true;
     }
+
+    return false;
   }
 
   register = (listener: (newValue: T) => void) => {
