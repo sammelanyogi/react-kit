@@ -16,7 +16,11 @@ type UrlMapper = (url: string) => Route | null;
  * Router is an extension of effect handler
  * and should maintain a stack
  */
-export class Router extends EffectHandler<Route> {
+export class Router {
+  private effect = new EffectHandler<Route>();
+  register = this.effect.register;
+  get = this.effect.get;
+
   private readonly routeStack: Array<Route> = [];
   private readonly stackSize: number;
   private readonly mapUrl?: UrlMapper;
@@ -32,17 +36,16 @@ export class Router extends EffectHandler<Route> {
    * @param mapUrl
    */
   constructor(mapUrl?: UrlMapper, stackSize: number = 32) {
-    super();
     this.stackSize = stackSize;
     this.mapUrl = mapUrl;
   }
 
-  fire = (route: Route) => {
+  private update = (route: Route) => {
     if (!route === null) {
       console.warn('Trying to change to an invalid route. This doesn\'t have any effect, but might be a bug on your application');
     }
 
-    return super.fire(route);
+    return this.effect.fire(route);
   }
 
   /**
@@ -57,7 +60,7 @@ export class Router extends EffectHandler<Route> {
     // If a transition is already in progress then don't do anything just return a success
     const previousRoute = this.routeStack.pop();
 
-    await this.updateRoute(previousRoute, this.fire);
+    await this.updateRoute(previousRoute, this.update);
     return previousRoute;
   }
 
@@ -75,7 +78,7 @@ export class Router extends EffectHandler<Route> {
     }
 
     // Perform the transition
-    await this.updateRoute(route, this.fire);
+    await this.updateRoute(route, this.update);
   }
 
   /**
@@ -98,7 +101,7 @@ export class Router extends EffectHandler<Route> {
       this.routeStack.push(this.get());
 
       // update the current route
-      this.fire(route);
+      this.update(route);
     });
   }
 
