@@ -32,7 +32,7 @@ export class Route<P extends {} = any> {
 
    /**
    * Check if this route identifies as the given Route
-   * @param comp
+   * @param route
    */
   equals(route: Route) {
     return route && this.component === route.component;
