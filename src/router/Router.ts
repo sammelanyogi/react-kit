@@ -17,9 +17,9 @@ type UrlMapper = (url: string) => Route | null;
  * and should maintain a stack
  */
 export class Router {
-  private effect = new EffectHandler<Route>();
-  register = this.effect.register;
-  get = this.effect.get;
+  private readonly effect: EffectHandler<Route>;
+  readonly register: EffectHandler<Route>['register'];
+  readonly get: EffectHandler<Route>['get'];
 
   private readonly routeStack: Array<Route> = [];
   private readonly stackSize: number;
@@ -36,6 +36,10 @@ export class Router {
    * @param mapUrl
    */
   constructor(mapUrl?: UrlMapper, stackSize: number = 32) {
+    this.effect = new EffectHandler();
+    this.register = this.effect.register;
+    this.get = this.effect.get;
+
     this.stackSize = stackSize;
     this.mapUrl = mapUrl;
   }

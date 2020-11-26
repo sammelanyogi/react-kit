@@ -29,4 +29,12 @@ export class Route<P extends {} = any> {
   is(comp: Component<P>) {
     return this.component === comp;
   }
+
+   /**
+   * Check if this route identifies as the given Route
+   * @param route
+   */
+  equals(route: Route) {
+    return route && this.component === route.component;
+  }
 }
