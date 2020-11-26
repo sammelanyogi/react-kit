@@ -3,7 +3,7 @@ import { Router, RouterContext, ConfirmTransition } from './Router';
 import { Route } from './Route';
 
 export function useRoute(router: Router) {
-  const [route, setRoute] = useState<Route>();
+  const [route, setRoute] = useState<Route>(router.get);
   useEffect(() => router.register(setRoute), [router]);
   return route;
 }
