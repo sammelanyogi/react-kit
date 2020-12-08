@@ -24,6 +24,8 @@ export class Router {
   private readonly routeStack: Array<Route> = [];
   private readonly stackSize: number;
   private readonly mapUrl?: UrlMapper;
+  private parentRouter: Router;
+  private recentUrl: string = null;
 
   private ConfirmTransitions: Array<ConfirmTransition> = [];
   private currentTransition: Array<ConfirmTransition> = null;
@@ -35,13 +37,32 @@ export class Router {
    *
    * @param mapUrl
    */
-  constructor(mapUrl?: UrlMapper, stackSize: number = 32) {
+  constructor(mapUrl?: UrlMapper, stackSize: number = 32, parentRouter: Router = null) {
     this.effect = new EffectHandler();
     this.register = this.effect.register;
     this.get = this.effect.get;
 
+    this.parentRouter = parentRouter;
     this.stackSize = stackSize;
     this.mapUrl = mapUrl;
+  }
+
+  private getRecentUrl(): string {
+    if (this.recentUrl) return this.recentUrl;
+    if (this.parentRouter) return this.parentRouter.getRecentUrl();
+    return null;
+  }
+
+  getInitialRoute = () => {
+    let k = this.get();
+    if (k) return k;
+    const url = this.getRecentUrl();
+    if (url) {
+      k = this.mapUrl(url);
+      this.effect.fire(k);
+      return k;
+    }
+    return null;
   }
 
   private update = (route: Route) => {
@@ -49,7 +70,9 @@ export class Router {
       console.warn('Trying to change to an invalid route. This doesn\'t have any effect, but might be a bug on your application');
     }
 
-    return this.effect.fire(route);
+    this.effect.fire(route);
+    // Reset the recent url
+    this.recentUrl = null;
   }
 
   /**
@@ -183,6 +206,7 @@ export class Router {
     if (!newRoute) throw new Error(`Route not found for ${url}`);
 
     op(newRoute);
+    this.recentUrl = url;
     return newRoute;
   }
 

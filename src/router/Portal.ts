@@ -1,6 +1,6 @@
 import { createElement } from 'react';
 import { Router, RouterContext } from './Router';
-import { useRoute } from './hooks';
+import { useRoute, useRouter } from './hooks';
 
 type Props = {
   router: Router,
