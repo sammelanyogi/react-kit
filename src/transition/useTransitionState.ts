@@ -2,19 +2,18 @@ import { Context, useContext, useState, useEffect, useRef } from 'react';
 import { Controller } from './Controller';
 
 export function createTransitionStateHook<S, A>(controller: Controller<S, A>) {
-  return function useTransitionState<R>(mapState: (state: S, prevState: S) => R): R {
-    const [result, setResult] = useState(() => mapState(controller.getState(), controller.getPrevState()));
+  return function useTransitionState<R>(mapState: (state: S, prevState: S, prevValue: R) => R): R {
+    const [result, setResult] = useState(() => mapState(controller.getState(), undefined, undefined));
 
     useEffect(() => {
       let prev = result;
 
       function cb(state: S, prevState: S) {
-        const k = mapState(state, prevState);
+        const k = mapState(state, prevState, prev);
         if (k === undefined) {
-          console.log('Nothing returned from mapState of useTransitionState. You can return `null` if there is no state update.');
+          console.log('Nothing returned from mapState of useTransitionState.');
         }
-
-        if (k === null || k === prev) return;
+        if (k === prev) return;
         prev = k;
         setResult(k);
       }
