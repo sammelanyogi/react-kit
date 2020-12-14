@@ -1,9 +1,11 @@
 import { Reducer, MapState, TransitionResult } from './types';
 
+const ResetToken = {};
 
 export class Controller<S, A> {
   private state: S;
   private prevState: S;
+  private initialState: S;
   private readonly reducer: Reducer<S, A>;
 
   private running: number = 0;
@@ -14,6 +16,7 @@ export class Controller<S, A> {
   private readonly queue: Array<A> = [];
 
   constructor(initialState: S, reducer: Reducer<S, A>, backLogThreshold: number = 5) {
+    this.initialState = initialState;
     this.state = initialState;
     this.prevState = initialState;
     this.reducer = reducer;
@@ -61,8 +64,15 @@ export class Controller<S, A> {
     this.internalDispatch(action);
   }
 
+  reset = () => {
+    this.dispatch(ResetToken as A);
+  }
+
   private internalDispatch(action: A | Array<A>) {
-    const nextState = this.reducer(this.state, action);
+    const nextState = action === ResetToken
+      ? this.initialState
+      : this.reducer(this.state, action);
+
     if (nextState === this.state) {
       // highly unlikely, an action should change the state
       return;

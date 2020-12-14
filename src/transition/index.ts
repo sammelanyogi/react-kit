@@ -13,6 +13,8 @@ export function createTransitionLibrary<S, A>(initialState: S, reducer: Reducer<
   return {
     dispatch: controller.dispatch,
 
+    reset: controller.reset,
+
     useTransitionState: useTransitionState,
 
     useTransition: createTransitionHook(controller),
