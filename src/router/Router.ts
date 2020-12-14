@@ -201,11 +201,12 @@ export class Router {
   }
 
   private async updateUrl(url: string, op: (route: Route) => void): Promise<Route> {
-    if (!this.mapUrl) throw new Error(`Router cannot handle url changes without a mapping. Trying to change url to ${url}`);
-    const newRoute = this.mapUrl(url || '');
-    if (!newRoute) throw new Error(`Route not found for ${url}`);
+    let newRoute: Route;
+    if (this.mapUrl) {
+      newRoute = this.mapUrl(url || '');
+      op(newRoute);
+    }
 
-    op(newRoute);
     this.recentUrl = url;
     return newRoute;
   }
