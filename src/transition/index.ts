@@ -15,6 +15,8 @@ export function createTransitionLibrary<S, A>(initialState: S, reducer: Reducer<
 
     reset: controller.reset,
 
+    getState: controller.getState,
+
     useTransitionState: useTransitionState,
 
     useTransition: createTransitionHook(controller),
