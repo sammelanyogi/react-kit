@@ -3,7 +3,7 @@ import { TextParser } from './parsers';
 import { GenericState, FormDefinition } from './types';
 
 function toText(k: any): string {
-  if (k === undefined || k === null || isNaN(k)) return '';
+  if (k === undefined || k === null || Number.isNaN(k)) return '';
   return String(k);
 }
 
