@@ -3,7 +3,7 @@ import React, { createContext, createElement, useCallback, useContext, useEffect
 type Component<P extends {}> = React.FunctionComponent<P>;
 
 type Modal<P extends {}> = {
-  show: (props?: P) => void;
+  show: (props?: Omit<P, "hide">) => void;
   hide: () => void;
 };
 
