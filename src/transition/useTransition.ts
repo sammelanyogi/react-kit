@@ -1,24 +1,26 @@
 import { useEffect, useRef } from 'react';
 import { Controller } from './Controller';
 
-import { MapState, Transition } from './types';
+import { MapState } from './types';
 
 export function createTransitionHook<S, A>(controller: Controller<S, A>) {
-  return function useTransition<V, R>(transition: Transition<V, R>, driver: V, mapState: MapState<S, R>) {
-    useEffect(() => {
-      // Do not initialize prevValue, as transition needs to run on mount as well
-      let prevValue: R;
+  return function useTransition<R>(mapState: MapState<S, R>, transition: (param: R) => Promise<any>) {
+    const ref = useRef<{ transition: (param: R) => Promise<any>, value?: R }>();
+    if (!ref.current) {
+      ref.current = { transition };
+    } else {
+      ref.current.transition = transition;
+    }
 
+    useEffect(() => {
       function callback(state: S, prevState: S): void {
         const next = mapState(state, prevState);
-        if (next === undefined) {
-          return null;
-        }
-        if (next === null || next === prevValue) return;
-        prevValue = next;
+        if (next === ref.current.value) return;
+
+        ref.current.value = next;
 
         // Start the animation
-        const transitionAnim = transition(driver, next);
+        const transitionAnim = ref.current.transition(next);
         if (transitionAnim) {
           controller.setup(transitionAnim);
         }

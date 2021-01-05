@@ -45,14 +45,18 @@ export class Controller<S, A> {
     };
   }
 
-  setup<R>(transitionAnim: TransitionResult) {
+  private transitionEnd = () => {
+    this.running -= 1;
+    if (this.running === 0) {
+      this.completeTransition();
+    }
+  }
+
+  setup(transitionAnim: Promise<any>) {
     this.running += 1;
-    transitionAnim.start(() => {
-      this.running -= 1;
-      if (this.running === 0) {
-        this.completeTransition();
-      }
-    });
+
+    transitionAnim.then(this.transitionEnd);
+    transitionAnim.catch(this.transitionEnd);
   }
 
   dispatch = (action: A) => {
@@ -109,11 +113,12 @@ export class Controller<S, A> {
     }
   }
 
-  getState() {
+  getState = () =>  {
+    console.log('Get state', this.state);
     return this.state;
   }
 
-  getPrevState() {
+  getPrevState = () => {
     return this.prevState;
   }
 }
