@@ -113,8 +113,7 @@ export class Controller<S, A> {
     }
   }
 
-  getState = () =>  {
-    console.log('Get state', this.state);
+  getState = () => {
     return this.state;
   }
 
