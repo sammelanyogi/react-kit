@@ -108,6 +108,9 @@ export class FormController<T extends GenericState> {
       this.submitting = true;
       const res = await fetch(this.action, {
         method: 'POST',
+        headers: {
+          "content-type": 'application/json',
+        },
         body: JSON.stringify(this.state),
       });
       if (res.status === 500) {
