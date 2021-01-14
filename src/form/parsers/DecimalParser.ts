@@ -4,7 +4,8 @@ export class DecimalParser extends Parser<number> {
   constructor() {
     super();
     this.add((value: string) => {
-      const v = parseFloat(value);
+      if (!value) return null;
+      const v = Number(value);
       if (isNaN(v)) throw new Error('Numeric value is required');
       return v;
     });

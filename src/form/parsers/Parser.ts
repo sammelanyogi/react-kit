@@ -7,6 +7,11 @@ import { GenericState } from '../types';
 export class Parser<T> {
   private parsers: Array<(value: any, state: {}) => any> = [];
 
+  // Function to convert original value to text input 
+  toText(value: T): string {
+    return value === undefined || value === null ? '' : String(value);
+  }
+
   /**
    * Use the parser as a post check
    * @param parser

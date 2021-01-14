@@ -5,6 +5,7 @@ export class IntegerParser extends DecimalParser {
     super();
 
     this.add((value: string) => {
+      if (!value) return null;
       if (/^[-+]?(\d+)$/.test(value)) {
         return Number(value);
       }
