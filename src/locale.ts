@@ -1,5 +1,5 @@
 import React, { Dispatch, useState, useContext, useEffect, useCallback } from 'react';
-import { EffectHandler } from './EffectHandler';
+import { EffectHandler } from './EffectHandler.js';
 
 type Dictionary = {
   [name: string]: string,

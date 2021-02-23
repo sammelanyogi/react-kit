@@ -1,4 +1,4 @@
-import { Parser } from "./parsers"
+import { Parser } from "./parsers/index.js"
 
 export type GenericState = {
   [name: string]: any,

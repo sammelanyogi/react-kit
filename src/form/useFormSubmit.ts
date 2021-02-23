@@ -1,6 +1,6 @@
 import { useEffect, useContext } from 'react';
-import { FormContext, FormController } from './FormController';
-import { GenericState } from './types';
+import { FormContext, FormController } from './FormController.js';
+import { GenericState } from './types.js';
 
 export function useFormSubmit<T extends GenericState, R>(controller: FormController<T>, onResult: (result: R) => void) {
   useEffect(() => {

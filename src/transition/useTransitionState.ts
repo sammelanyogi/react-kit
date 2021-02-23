@@ -1,5 +1,5 @@
 import { Context, useContext, useState, useEffect, useRef } from 'react';
-import { Controller } from './Controller';
+import { Controller } from './Controller.js';
 
 export function createTransitionStateHook<S, A>(controller: Controller<S, A>) {
   return function useTransitionState<R>(mapState: (state: S, prevState: S, prevValue: R) => R): R {

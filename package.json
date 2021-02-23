@@ -3,13 +3,19 @@
   "version": "1.0.11",
   "description": "Bhoos React Library",
   "main": "dist/index.js",
+  "module": "es6/index.js",
   "react-native": "src/index.ts",
   "scripts": {
-    "build": "rimraf dist && tsc"
+    "clean": "rimraf dist && rimraf es6",
+    "build:cjs": "tsc",
+    "build:es6": "mkdir -p es6 && echo '{\"type\":\"module\"}' > es6/package.json && tsc --module es6 --outDir es6",
+    "build": "yarn build:cjs && yarn build:es6",
+    "prepublishOnly": "yarn clean && yarn build"
   },
   "files": [
     "dist",
     "src",
+    "es6",
     "docs"
   ],
   "publishConfig": {

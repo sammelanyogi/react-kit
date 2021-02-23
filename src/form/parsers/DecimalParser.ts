@@ -1,4 +1,4 @@
-import { Parser } from './Parser';
+import { Parser } from './Parser.js';
 
 export class DecimalParser extends Parser<number> {
   constructor() {

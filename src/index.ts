@@ -1,5 +1,5 @@
-export { createLocale } from './locale';
-export * from './router';
-export * from './Modal';
-export * from './form';
-export * from './transition';
+export { createLocale } from './locale.js';
+export * from './router/index.js';
+export * from './Modal.js';
+export * from './form/index.js';
+export * from './transition/index.js';

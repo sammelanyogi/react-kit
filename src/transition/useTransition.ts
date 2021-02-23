@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { Controller } from './Controller';
+import { Controller } from './Controller.js';
 
-import { MapState } from './types';
+import { MapState } from './types.js';
 
 export function createTransitionHook<S, A>(controller: Controller<S, A>) {
   return function useTransition<R>(mapState: MapState<S, R>, transition: (param: R) => Promise<any>) {

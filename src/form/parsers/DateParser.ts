@@ -1,4 +1,4 @@
-import { Parser } from "./Parser";
+import { Parser } from "./Parser.js";
 
 function parseDate(dateStr: string) {
   const parts = dateStr.split('-', 3);

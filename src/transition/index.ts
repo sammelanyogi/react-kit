@@ -1,9 +1,9 @@
 import React, { ComponentType } from 'react';
-import { Controller } from './Controller';
-import { createTransitionStateHook } from './useTransitionState';
-import { createTransitionHook } from './useTransition';
+import { Controller } from './Controller.js';
+import { createTransitionStateHook } from './useTransitionState.js';
+import { createTransitionHook } from './useTransition.js';
 
-import { Reducer, MapState } from './types';
+import { Reducer, MapState } from './types.js';
 
 export function createTransitionLibrary<S, A>(initialState: S, reducer: Reducer<S, A>) {
   const controller = new Controller(initialState, reducer);

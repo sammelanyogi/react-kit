@@ -1,4 +1,4 @@
-import { GenericState } from '../types';
+import { GenericState } from '../types.js';
 
 /**
  * A parser that validates the form for the given input.

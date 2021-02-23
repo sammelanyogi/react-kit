@@ -1,6 +1,6 @@
-export { Parser } from './Parser';
-export { TextParser } from './TextParser';
-export { IntegerParser } from './IntegerParser';
-export { BooleanParser } from './BooleanParser';
-export { DecimalParser } from './DecimalParser';
-export { DateParser } from './DateParser';
+export { Parser } from './Parser.js';
+export { TextParser } from './TextParser.js';
+export { IntegerParser } from './IntegerParser.js';
+export { BooleanParser } from './BooleanParser.js';
+export { DecimalParser } from './DecimalParser.js';
+export { DateParser } from './DateParser.js';

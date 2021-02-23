@@ -1,4 +1,4 @@
-import { Reducer, MapState, TransitionResult } from './types';
+import { Reducer, MapState, TransitionResult } from './types.js';
 
 const ResetToken = {};
 

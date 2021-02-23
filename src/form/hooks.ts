@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect, useRef, useMemo } from 'react';
-import { FormController, FormContext } from './FormController';
-import { GenericState, FormDefinition } from './types';
+import { FormController, FormContext } from './FormController.js';
+import { GenericState, FormDefinition } from './types.js';
 
 export function useInputError(name: string): undefined | Error {
   const controller = useContext(FormContext);

@@ -1,6 +1,6 @@
 import { createContext } from 'react';
-import { EffectHandler } from '../EffectHandler';
-import { Route } from './Route';
+import { EffectHandler } from '../EffectHandler.js';
+import { Route } from './Route.js';
 
 type Transition = {
   confirm: () => void;

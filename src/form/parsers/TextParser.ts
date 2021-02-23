@@ -1,4 +1,4 @@
-import { Parser } from './Parser';
+import { Parser } from './Parser.js';
 
 export class TextParser extends Parser<string> {
   minLength(n: number) {

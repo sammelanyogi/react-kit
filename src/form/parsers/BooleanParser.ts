@@ -1,4 +1,4 @@
-import { Parser } from './Parser';
+import { Parser } from './Parser.js';
 
 export class BooleanParser extends Parser<boolean> {
   constructor() {

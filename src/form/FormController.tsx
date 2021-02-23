@@ -1,6 +1,6 @@
 import React from 'react';
 import { TextParser } from './parsers';
-import { GenericState, FormDefinition } from './types';
+import { GenericState, FormDefinition } from './types.js';
 
 function toText(k: any): string {
   if (k === undefined || k === null || Number.isNaN(k)) return '';
