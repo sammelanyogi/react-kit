@@ -10,7 +10,7 @@ type Transition = {
 
 export type ConfirmTransition = (transition: Transition) => void;
 
-type UrlMapper = (url: string) => Route | null;
+type UrlMapper = (url: string, cb: (url: string) => void) => Route | null;
 
 /**
  * Router is an extension of effect handler
@@ -24,11 +24,12 @@ export class Router {
   private readonly routeStack: Array<Route> = [];
   private readonly stackSize: number;
   private readonly mapUrl?: UrlMapper;
-  private parentRouter: Router;
-  private recentUrl: string = null;
+  private parentRouter: Router | null;
+  private recentUrl: string | null = null;
+  private childUrl: string = '';
 
   private ConfirmTransitions: Array<ConfirmTransition> = [];
-  private currentTransition: Array<ConfirmTransition> = null;
+  private currentTransition: Array<ConfirmTransition> | null = null;
 
   /**
    * Create a router for handling route changes, with a
@@ -37,7 +38,7 @@ export class Router {
    *
    * @param mapUrl
    */
-  constructor(mapUrl?: UrlMapper, stackSize: number = 32, parentRouter: Router = null) {
+  constructor(mapUrl?: UrlMapper, stackSize: number = 32, parentRouter: Router | null = null) {
     this.effect = new EffectHandler();
     this.register = this.effect.register;
     this.get = this.effect.get;
@@ -47,10 +48,14 @@ export class Router {
     this.mapUrl = mapUrl;
   }
 
-  private getRecentUrl(): string {
+  private getRecentUrl(): string | null {
     if (this.recentUrl) return this.recentUrl;
     if (this.parentRouter) return this.parentRouter.getRecentUrl();
     return null;
+  }
+
+  getChildUrl = () => {
+    return this.childUrl;
   }
 
   getInitialRoute = () => {
@@ -58,7 +63,11 @@ export class Router {
     if (k) return k;
     const url = this.getRecentUrl();
     if (url) {
-      k = this.mapUrl(url);
+      // @ts-ignore
+      k = this.mapUrl(url, (childUrl: string) => {
+        this.childUrl= childUrl
+      });
+            // @ts-ignore
       this.effect.fire(k);
       return k;
     }
@@ -86,8 +95,9 @@ export class Router {
   pop = async (): Promise<Route> => {
     // If a transition is already in progress then don't do anything just return a success
     const previousRoute = this.routeStack.pop();
-
+      // @ts-ignore
     await this.updateRoute(previousRoute, this.update);
+          // @ts-ignore
     return previousRoute;
   }
 
@@ -125,6 +135,7 @@ export class Router {
       }
 
       // Push the current route to the stack
+            // @ts-ignore
       this.routeStack.push(this.get());
 
       // update the current route
@@ -154,18 +165,24 @@ export class Router {
         // Since the complete function is called for all listeners, the earlier ones
         // might have cancelled it which would have already resolved, so don't need
         // to do further checks
+              // @ts-ignore
         if (!this.currentTransition) return;
 
         // The function is called without handler in case of cancellation
         if (!handler) {
           // The effect has been cancelled
+                // @ts-ignore
           this.currentTransition = null;
           reject(err || new Error('Route transition was cancelled'));
         } else {
+                // @ts-ignore
           const idx = this.currentTransition.indexof(handler);
           if (idx >= 0) {
+                  // @ts-ignore
             this.currentTransition.splice(idx, 1);
+                  // @ts-ignore
             if (this.currentTransition.length === 0) {
+                    // @ts-ignore
               this.currentTransition = null;
               op(route);
               resolve();
@@ -176,6 +193,7 @@ export class Router {
 
       this.ConfirmTransitions.forEach(handler => handler({
         route,
+              // @ts-ignore
         cancel: (err?: Error) => complete(null, err),
         confirm: () => complete(handler),
       }));
@@ -188,6 +206,7 @@ export class Router {
    * @returns boolean true if the mapping was successful otherwise false
    */
   setUrl = async (url: string | null): Promise<Route> => {
+          // @ts-ignore
     return this.updateUrl(url, this.set);
   }
 
@@ -197,17 +216,22 @@ export class Router {
    * @returns boolean true if the mapping was successful otherwise false
    */
   pushUrl = async (url: string | null): Promise<Route> => {
+          // @ts-ignore
     return this.updateUrl(url, this.push);
   }
 
   private async updateUrl(url: string, op: (route: Route) => void): Promise<Route> {
     let newRoute: Route;
     if (this.mapUrl) {
-      newRoute = this.mapUrl(url || '');
+            // @ts-ignore
+      newRoute = this.mapUrl(url || '', (childUrl: string) => {
+        this.childUrl=childUrl;
+      });
       op(newRoute);
     }
 
     this.recentUrl = url;
+          // @ts-ignore
     return newRoute;
   }
 
