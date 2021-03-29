@@ -208,6 +208,10 @@ export class Router {
    * @returns boolean true if the mapping was successful otherwise false
    */
   pushUrl = async (url: string | null): Promise<Route> => {
+    if ((url || '').startsWith('/') && this.parentRouter) {
+      this.parentRouter.pushUrl(url);
+      return;
+    }
     return this.updateUrl(url, this.push);
   }
 
