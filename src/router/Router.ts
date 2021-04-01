@@ -1,17 +1,13 @@
 import { createContext } from 'react';
 import { EffectHandler } from '../EffectHandler';
 import { Route } from './Route';
-
 type Transition = {
   confirm: () => void;
   cancel: () => void;
   route: Route;
 }
-
 export type ConfirmTransition = (transition: Transition) => void;
-
 type UrlMapper = (url: string, cb: (url: string) => void) => Route | null;
-
 /**
  * Router is an extension of effect handler
  * and should maintain a stack
@@ -20,17 +16,15 @@ export class Router {
   private readonly effect: EffectHandler<Route>;
   readonly register: EffectHandler<Route>['register'];
   readonly get: EffectHandler<Route>['get'];
-
   private readonly routeStack: Array<Route> = [];
   private readonly stackSize: number;
   private readonly mapUrl?: UrlMapper;
   private parentRouter: Router | null;
   private recentUrl: string | null = null;
   private childUrl: string = '';
-
+  private childListeners: Array<(childUrl: string) => void> = [];
   private ConfirmTransitions: Array<ConfirmTransition> = [];
   private currentTransition: Array<ConfirmTransition> | null = null;
-
   /**
    * Create a router for handling route changes, with a
    * custom url mapper that is used by `setUrl`, for mapping
@@ -42,20 +36,29 @@ export class Router {
     this.effect = new EffectHandler();
     this.register = this.effect.register;
     this.get = this.effect.get;
-
     this.parentRouter = parentRouter;
     this.stackSize = stackSize;
     this.mapUrl = mapUrl;
+    if (this.parentRouter) {
+      this.pushUrl(parentRouter.childUrl)
+      parentRouter.registerChildListener(this.pushUrl)
+    }
   }
-
   private getRecentUrl(): string | null {
     if (this.recentUrl) return this.recentUrl;
     if (this.parentRouter) return this.parentRouter.getRecentUrl();
     return null;
   }
 
-  getChildUrl = () => {
-    return this.childUrl;
+  registerChildListener = (cb: (url: string) => void) => {
+    this.childListeners.push(cb);
+  }
+
+  setChildUrl = (childUrl: string) => {
+    this.childListeners.forEach(c => {
+      c(childUrl);
+    })
+    this.childUrl=childUrl;
   }
 
   getInitialRoute = () => {
@@ -63,9 +66,7 @@ export class Router {
     if (k) return k;
     const url = this.getRecentUrl();
     if (url) {
-      k = this.mapUrl(url, (childUrl: string) => {
-        this.childUrl= childUrl
-      });
+      k = this.mapUrl(url, this.setChildUrl);
       this.effect.fire(k);
       return k;
     }
@@ -76,12 +77,10 @@ export class Router {
     if (!route === null) {
       console.warn('Trying to change to an invalid route. This doesn\'t have any effect, but might be a bug on your application');
     }
-
     this.effect.fire(route);
     // Reset the recent url
     this.recentUrl = null;
   }
-
   /**
    * Change the route to the previous one based on the stack.
    * @returns boolean The return value only indicates if the pop operation
@@ -96,7 +95,6 @@ export class Router {
     await this.updateRoute(previousRoute, this.update);
     return previousRoute;
   }
-
   /**
    * Change the current route on this router, clearing the stack in process
    * @param route
@@ -109,11 +107,9 @@ export class Router {
       this.routeStack.length = 0;
       return;
     }
-
     // Perform the transition
     await this.updateRoute(route, this.update);
   }
-
   /**
    * Add route to the router stack. The push will not work if a
    * transition is already in progress, or one of the transition
@@ -123,34 +119,27 @@ export class Router {
   push = async (route: Route): Promise<void> => {
     // No need to do anything if the route has not changed
     if (this.get() === route) return;
-
     await this.updateRoute(route, (route: Route) => {
       // Limit the stack to a fixed size, forget any older routes
       while (this.routeStack.length >= this.stackSize) {
         this.routeStack.shift();
       }
-
       // Push the current route to the stack
       this.routeStack.push(this.get());
-
       // update the current route
       this.update(route);
     });
   }
-
   private async updateRoute(route: Route, op: (route: Route) => void): Promise<void> {
     // Can't start a transition if a one is already in progress, can't do anything
     if (this.currentTransition) throw new Error('Another route transition is in progress');
-
     // No need to go through a confirmation cycle if there aren't any registered
     if (!this.ConfirmTransitions.length) {
       op(route);
       return;
     }
-
     // Mark the transition to have started
     this.currentTransition = this.ConfirmTransitions;
-
     return new Promise<void>((resolve, reject) => {
       /**
        * Route transition complete is cancelled if any one of the listeners cancels
@@ -161,22 +150,16 @@ export class Router {
         // might have cancelled it which would have already resolved, so don't need
         // to do further checks
         if (!this.currentTransition) return;
-
         // The function is called without handler in case of cancellation
         if (!handler) {
           // The effect has been cancelled
-
           this.currentTransition = null;
           reject(err || new Error('Route transition was cancelled'));
         } else {
-
           const idx = this.currentTransition.indexof(handler);
           if (idx >= 0) {
-
             this.currentTransition.splice(idx, 1);
-
             if (this.currentTransition.length === 0) {
-
               this.currentTransition = null;
               op(route);
               resolve();
@@ -184,7 +167,6 @@ export class Router {
           }
         }
       }
-
       this.ConfirmTransitions.forEach(handler => handler({
         route,
         cancel: (err?: Error) => complete(null, err),
@@ -192,7 +174,6 @@ export class Router {
       }));
     });
   }
-
   /**
    * Changed the route based on the given url. Uses `set(route)` after mapping the url.
    * @param url
@@ -201,7 +182,6 @@ export class Router {
   setUrl = async (url: string | null): Promise<Route> => {
     return this.updateUrl(url, this.set);
   }
-
   /**
    * Change the route based on the given url. Uses `push(route)` after mapping the url.
    * @param url
@@ -209,26 +189,19 @@ export class Router {
    */
   pushUrl = async (url: string | null): Promise<Route> => {
     if ((url || '').startsWith('/') && this.parentRouter) {
-      this.parentRouter.pushUrl(url);
-      return;
+      this.parentRouter.pushUrl(url)
     }
     return this.updateUrl(url, this.push);
   }
-
   private async updateUrl(url: string, op: (route: Route) => void): Promise<Route> {
     let newRoute: Route;
     if (this.mapUrl) {
-
-      newRoute = this.mapUrl(url || '', (childUrl: string) => {
-        this.childUrl=childUrl;
-      });
+      newRoute = this.mapUrl(url || '', this.setChildUrl);
       op(newRoute);
     }
-
     this.recentUrl = url;
     return newRoute;
   }
-
   /**
    * Register a transition confirmation handler to cancel a route
    * change.
@@ -236,7 +209,6 @@ export class Router {
    */
   registerConfirm(effect: ConfirmTransition) {
     this.ConfirmTransitions = this.ConfirmTransitions.concat(effect);
-
     return () => {
       this.ConfirmTransitions = this.ConfirmTransitions.filter(k => k !== effect);
       // if the effect is part of the current transition, consider it as a
@@ -244,14 +216,10 @@ export class Router {
     }
   }
 }
-
 /**
  * A default top level router available for all the applications.
  * In most cases, use the defaultRouter to map between login and main app.
  * For all other use cases create your own router
  */
 export const defaultRouter = new Router();
-
 export const RouterContext = createContext<Router>(defaultRouter);
-
-
