@@ -22,7 +22,7 @@ export class Router {
   private parentRouter: Router | null;
   private recentUrl: string | null = null;
   private childUrl: string = '';
-  private childListeners: Array<(childUrl: string) => void> = [];
+  private childListeners: Array<Router> = [];
   private ConfirmTransitions: Array<ConfirmTransition> = [];
   private currentTransition: Array<ConfirmTransition> | null = null;
   /**
@@ -32,17 +32,14 @@ export class Router {
    *
    * @param mapUrl
    */
-  constructor(mapUrl?: UrlMapper, stackSize: number = 32, parentRouter: Router | null = null) {
+  constructor(mapUrl?: UrlMapper, stackSize: number = 32) {
     this.effect = new EffectHandler();
     this.register = this.effect.register;
     this.get = this.effect.get;
-    this.parentRouter = parentRouter;
+
     this.stackSize = stackSize;
     this.mapUrl = mapUrl;
-    if (this.parentRouter) {
-      this.pushUrl(parentRouter.childUrl)
-      parentRouter.registerChildListener(this.pushUrl)
-    }
+
   }
   private getRecentUrl(): string | null {
     if (this.recentUrl) return this.recentUrl;
@@ -50,21 +47,29 @@ export class Router {
     return null;
   }
 
-  registerChildListener = (cb: (url: string) => void) => {
-    this.childListeners.push(cb);
+
+  registerChild = (childRouter: Router) => {
+    this.childListeners.push(childRouter);
+    childRouter.pushUrl(this.childUrl);
+    return () => {
+      const index = this.childListeners.findIndex(c => c === childRouter);
+      if (index >= 0) {
+        this.childListeners.splice(index, 1);
+      }
+    }
   }
 
   setChildUrl = (childUrl: string) => {
     this.childListeners.forEach(c => {
-      c(childUrl);
+      c.pushUrl(childUrl);
     })
     this.childUrl=childUrl;
   }
 
-  getInitialRoute = () => {
+  getInitialRoute = (parentRouter: null | Router) => {
     let k = this.get();
     if (k) return k;
-    const url = this.getRecentUrl();
+    const url = parentRouter? parentRouter.childUrl :this.getRecentUrl();
     if (url) {
       k = this.mapUrl(url, this.setChildUrl);
       this.effect.fire(k);
