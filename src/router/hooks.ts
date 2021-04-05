@@ -3,8 +3,17 @@ import { Router, RouterContext, ConfirmTransition } from './Router';
 import { Route } from './Route';
 
 export function useRoute(router: Router) {
-  const [route, setRoute] = useState<Route>(router.getInitialRoute);
-  useEffect(() => router.register(setRoute), [router]);
+  const parentRouter = useRouter();
+  const isParent = parentRouter === router;
+  const [route, setRoute] = useState<Route>(() => router.getInitialRoute(isParent ? null : parentRouter));
+  useEffect(() => {
+    const unreg = parentRouter.registerChild(router);
+    const regRoute = router.register(setRoute);
+    return () => {
+      regRoute();
+      unreg();
+    };
+  }, [parentRouter, router]);
   return route;
 }
 
