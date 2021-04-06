@@ -1,6 +1,6 @@
 import { createElement } from 'react';
 import { Router, RouterContext } from './Router.js';
-import { useRoute, useRouter } from './hooks.js';
+import { useRoute } from './hooks.js';
 
 type Props = {
   router: Router,
@@ -14,7 +14,6 @@ type Props = {
 export function Portal({ router }: Props) {
   // List for change on the route
   const route = useRoute(router);
-
   // Do not render anything until a route is available
   if (!route) return null;
 
