@@ -20,6 +20,7 @@
     "es6",
     "docs"
   ],
+  "repository": "git@github.com:bhoos/react-kit",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
