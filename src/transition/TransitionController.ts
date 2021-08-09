@@ -1,0 +1,234 @@
+import { createElement, useEffect, useState, ComponentType } from "react";
+
+export type Reducer<State, Action> = (state: State, action: Action) => State;
+
+export type Anim = {
+  start: (cb: (param: { finished: boolean }) => void) => void,
+  stop: () => void,
+};
+
+export type Transition<State, Action> = (nextState: State, prevState: State, action: Action) => Anim;
+
+export type MapState<State, Result> = (nextState: State, prevState: State) => Result;
+
+function subscribe<K>(array: Array<K>, fn: K) {
+  array.push(fn);
+  return () => {
+    const idx = array.indexOf(fn);
+    if (idx >= 0) {
+      array.splice(idx, 1);
+    }
+  }
+}
+
+export class TransitionContext<State, Action> {
+  private readonly reducer: Reducer<State, Action>
+  private currentState: State;
+  private readonly queue: Array<Action> = [];
+  private running: boolean = false;
+
+  private aborted: boolean = false;
+
+  private stateUpdates: Array<MapState<State, any>> = [];
+
+  private unmounts: Transition<State, Action>[] = [];
+  private transitions: Transition<State, Action>[] = [];
+  private mounts: Transition<State, Action>[] = [];
+  private backLogs: Array<() => void> = [];
+
+  private currentAnims: Anim[];
+
+  constructor(reducer: Reducer<State, Action>) {
+    this.reducer = reducer;
+  }
+
+  reset(initialState: State) {
+    // Make sure we start fresh, and run all the mounting at this point
+    this.currentState = initialState;
+
+    // Abort any transitions that are running
+    this.abort();
+
+    // Run all the mounting actions
+    this.updateState(this.currentState, this.currentState);
+  }
+
+  getState() {
+    return this.currentState;
+  }
+
+  private abort() {
+    // Set the abort flag
+    this.aborted = true;
+
+    // Clean up the queue
+    this.queue.length = 0;
+
+    // If there are any animations running, stop them
+    if (this.currentAnims) {
+      this.currentAnims.forEach(anim => anim.stop());
+    }
+  }
+
+  dispatch(action: Action) {
+    if (this.running) {
+      // In case of a queue, push the action to run later
+      this.queue.push(action);
+      this.backLogs.forEach(cb => cb());
+    } else {
+      // Initiate a dispatch, if it's not running
+      this.startDispatch(action, this.currentState);
+    }
+  }
+
+  private runAnimations(transitions: Transition<State, Action>[], nextState: State, prevState: State, action: Action) {
+    return new Promise<void>((resolve) => {
+      // If there aren't any transitions to run just quit right away
+      if (transitions.length === 0) return;
+    
+      // Keep track of number of animations to run to resolve completion
+      let counter = transitions.length;
+
+      // Remember the running animations for aborting
+      this.currentAnims = transitions.map(transition => {
+        const anim = transition(nextState, prevState, action);
+        anim.start(() => {
+          counter -= 1;
+          if (counter === 0) {
+            this.currentAnims = null;
+            resolve();
+          }
+        });
+        return anim;
+      });
+    });
+  }
+
+  private startDispatch(action: Action, prevState: State) {
+    this.running = true;
+
+    this.internalDispatch(action, prevState).then((success) => {
+      this.running = false;
+      this.aborted = false; // Clear the aborted flag as well
+
+      // Remember the prevState, when performing a batch action
+      // We want the prevState to the the one before all the batched
+      // actions
+      let prevState = this.currentState;
+
+      // Looks like the dispatch was aborted, 
+      // This might be the user requested a sync to move
+      // forward. In which case process the entire array.
+      if (!success) {
+        // Process all the actions, except the last one
+        while (this.queue.length > 1) {
+          this.currentState = this.reducer(this.currentState, this.queue.shift());
+        }
+
+        // It might be possible that the backlog was processed
+        this.backLogs.forEach(cb => cb());
+      }
+
+      // Continue with the remaining actions
+      if (this.queue.length) {
+        this.startDispatch(this.queue.shift(), prevState);
+      }
+    });
+  }
+
+  private async internalDispatch(action: Action, prevState: State) {
+    // Generate the next state
+    this.currentState = this.reducer(this.currentState, action);
+    const nextState = this.currentState;
+
+    // Run all unmount transitions
+    await this.runAnimations(this.unmounts, nextState, prevState, action);
+    if (this.aborted) return false;
+
+    // Perform a state transition, in case there aren't any transitions, no need
+    // to update state with transient condition
+    if (this.transitions.length) {
+      await this.updateState(nextState, prevState);
+      if (this.aborted) return false;
+
+      await this.runAnimations(this.transitions, nextState, prevState, action);
+      if (this.aborted) return false;
+    }
+
+    // Perform a stable state update
+    await this.updateState(nextState, nextState);
+    if (this.aborted) return false;
+
+    // Perform mount transition
+    await this.runAnimations(this.mounts, nextState, prevState, action);
+    if (this.aborted) return false;
+    
+    return true;
+  }
+
+  private async updateState(nextState: State, prevState: State) {
+    // Run the state updates from the back, to avoid problems that
+    // may arise due to array mutation
+    for (let i = this.stateUpdates.length - 1; i >= 0; i -= 1) {
+      this.stateUpdates[i](nextState, prevState);
+    }
+    
+    // Wait for the state update to complete, except the state update to
+    // complete in an event loop
+    return new Promise(resolve => setTimeout(resolve, 0));
+  }
+
+  withVisibility<S extends State>(visibilityCheck: MapState<S, boolean>) {
+    return <Props = {}>(Component: ComponentType<Props>) => {
+      return (props: Props) => {
+        const visible = this.useState(visibilityCheck);
+        if (!visible) return null;
+        return createElement(Component, props);
+      }
+    }
+  }
+
+  useUnmount<S extends State>(transition: Transition<S, Action>, deps: any[] = []) {
+    useEffect(() => subscribe(this.unmounts, transition), deps);
+  }
+
+  useMount<S extends State>(transition: Transition<S, Action>, deps: any[] = []) {
+    useEffect(() => subscribe(this.mounts, transition), deps);
+  }
+
+  useTransition<S extends State>(transition: Transition<S, Action>, deps: any[] = []) {
+    useEffect(() => subscribe(this.transitions, transition), deps);
+  }
+
+  useState<S extends State, Result>(mapState: MapState<S, Result>, deps: any[] = []): Result {
+    const [value, setValue] = useState(() => {
+      const state = this.currentState as S;
+      return mapState(state, state);
+    });
+
+    useEffect(() => {
+      let prev = value;
+      function cb(nextState: S, prevState: S) {
+        const next = mapState(nextState, prevState);
+        if (next !== prev) {
+          prev = next;
+          setValue(next);
+        }
+      }
+      return subscribe(this.stateUpdates, cb);
+    }, deps);
+
+    return value;
+  }
+
+  useBackLog(max: number) {
+    const [backlog, setBackLog] = useState(this.queue.length > max);
+    useEffect(() => {
+      return subscribe(this.backLogs, () => {
+        setBackLog(this.queue.length > max);
+      });
+    }, [max]);
+
+    return backlog;
+  }
+}

@@ -1,6 +1,6 @@
 {
   "name": "@bhoos/react-kit",
-  "version": "1.0.13",
+  "version": "2.0.0",
   "description": "Bhoos React Library",
   "main": "dist/index.js",
   "module": "es6/index.js",
@@ -10,9 +10,7 @@
     "build:cjs": "tsc",
     "build:es6": "mkdir -p es6 && echo '{\"type\":\"module\"}' > es6/package.json && tsc --module es6 --outDir es6",
     "build": "yarn build:cjs && yarn build:es6",
-    "prepublishOnly": "yarn clean && yarn build",
-    "postversion": "git push && git push --tags",
-    "patch": "npm version patch --yes && npm publish --tag next"
+    "prepublishOnly": "yarn clean && yarn build"
   },
   "files": [
     "dist",
