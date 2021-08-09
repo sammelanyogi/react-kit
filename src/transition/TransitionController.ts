@@ -7,7 +7,7 @@ export type Anim = {
   stop: () => void,
 };
 
-export type Transition<State, Action> = (nextState: State, prevState: State, action: Action) => Anim;
+export type Transition<State, Action> = (nextState: State, prevState: State, action: Action) => null | Anim | Anim[];
 
 export type MapState<State, Result> = (nextState: State, prevState: State) => Result;
 
@@ -21,7 +21,7 @@ function subscribe<K>(array: Array<K>, fn: K) {
   }
 }
 
-export class TransitionContext<State, Action> {
+export class TransitionController<State, Action> {
   private readonly reducer: Reducer<State, Action>
   private currentState: State;
   private readonly queue: Array<Action> = [];
@@ -70,6 +70,16 @@ export class TransitionContext<State, Action> {
     }
   }
 
+  catchup() {
+    // Set the abort flag
+    this.aborted = true;
+
+    // Stop any running animations
+    if (this.currentAnims) {
+      this.currentAnims.forEach(anim => anim.stop());
+    }
+  }
+
   dispatch(action: Action) {
     if (this.running) {
       // In case of a queue, push the action to run later
@@ -90,16 +100,26 @@ export class TransitionContext<State, Action> {
       let counter = transitions.length;
 
       // Remember the running animations for aborting
-      this.currentAnims = transitions.map(transition => {
+      this.currentAnims = [];
+
+      function onEnd() {
+        counter -= 1;
+        if (counter === 0) {
+          this.currentAnims = null;
+          resolve();
+        }
+      }
+
+      transitions.forEach(transition => {
         const anim = transition(nextState, prevState, action);
-        anim.start(() => {
-          counter -= 1;
-          if (counter === 0) {
-            this.currentAnims = null;
-            resolve();
-          }
-        });
-        return anim;
+        if (!anim) return;
+        if (Array.isArray(anim)) {
+          this.currentAnims.push(...anim);
+          anim.forEach(a => a.start(onEnd));
+        } else {
+          this.currentAnims.push(anim);
+          anim.start(onEnd);
+        }
       });
     });
   }
