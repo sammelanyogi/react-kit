@@ -94,10 +94,10 @@ export class TransitionController<State, Action> {
   private runAnimations(transitions: Transition<State, Action>[], nextState: State, prevState: State, action: Action) {
     return new Promise<void>((resolve) => {
       // If there aren't any transitions to run just quit right away
-      if (transitions.length === 0) return;
+      if (transitions.length === 0) return resolve();
     
       // Keep track of number of animations to run to resolve completion
-      let counter = transitions.length;
+      let counter = 0;
 
       // Remember the running animations for aborting
       this.currentAnims = [];
@@ -114,13 +114,19 @@ export class TransitionController<State, Action> {
         const anim = transition(nextState, prevState, action);
         if (!anim) return;
         if (Array.isArray(anim)) {
+          counter += anim.length;
           this.currentAnims.push(...anim);
           anim.forEach(a => a.start(onEnd));
         } else {
+          counter += 1;
           this.currentAnims.push(anim);
           anim.start(onEnd);
         }
       });
+
+      // It is possible that none of the transitions had any animations to run
+      // So, resolve right away
+      if (counter === 0) resolve();
     });
   }
 
