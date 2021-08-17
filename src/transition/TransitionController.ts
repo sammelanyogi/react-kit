@@ -145,9 +145,12 @@ export class TransitionController<State, Action> {
         const anim = transition(nextState, prevState, action);
         if (!anim) return;
         if (Array.isArray(anim)) {
-          counter += anim.length;
-          this.currentAnims.push(...anim);
-          anim.forEach(a => a.start(onEnd));
+          anim.forEach(a => {
+            if (a === null) return;
+            counter += 1;
+            this.currentAnims.push(a);
+            a.start(onEnd);
+          });
         } else {
           counter += 1;
           this.currentAnims.push(anim);
