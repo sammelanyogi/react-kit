@@ -146,7 +146,7 @@ export class TransitionController<State, Action> {
         if (!anim) return;
         if (Array.isArray(anim)) {
           anim.forEach(a => {
-            if (a === null) return;
+            if (!a) return;
             counter += 1;
             this.currentAnims.push(a);
             a.start(onEnd);
