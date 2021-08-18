@@ -37,6 +37,7 @@ export class TransitionController<State, Action> {
   private backLogs: Array<() => void> = [];
 
   private currentAnims: Anim[];
+  private holdingAnims: Anim[] = [];
 
   constructor(reducer: Reducer<State, Action>) {
     this.reducer = reducer;
@@ -82,8 +83,12 @@ export class TransitionController<State, Action> {
     }
   }
 
+  private shouldHoldAction() {
+    return this.running || this.holdingAnims.length > 0;
+  }
+
   dispatch(action: Action) {
-    if (this.running) {
+    if (this.shouldHoldAction()) {
       // In case of a queue, push the action to run later
       this.queue.push(action);
       this.backLogs.forEach(cb => cb());
@@ -96,30 +101,19 @@ export class TransitionController<State, Action> {
   hold(animations: Array<Anim>) {
     // If a transition is in process, then it's not
     // possible to hold the animations
-    if (this.running) {
-      console.warn('Cannot hold when a transition is in progress');
-      return;
-    }
-
-    this.running = true;
-    let counter = 0;
     animations.forEach((anim) => {
       if (!anim) return;
-      counter += 1;
+      this.holdingAnims.push(anim);
       anim.start(() => {
-        counter -= 1;
-        if (counter === 0) {
-          this.running = false;
-          // Looks like we got ourselves a queue to process
-          if (this.queue.length) {
+        const idx = this.holdingAnims.indexOf(anim);
+        if (idx >= 0) {
+          this.holdingAnims.splice(idx, 1);
+          if (this.holdingAnims.length === 0 && this.queue.length) {
             this.startDispatch(this.queue.shift(), this.currentState);
           }
         }
-      })
+      });
     });
-
-    // In case there weren't any valid animations to run
-    if (counter === 0) this.running = false;
   }
 
   private runAnimations(transitions: Transition<State, Action>[], nextState: State, prevState: State, action: Action) {
@@ -189,8 +183,8 @@ export class TransitionController<State, Action> {
         this.backLogs.forEach(cb => cb());
       }
 
-      // Continue with the remaining actions
-      if (this.queue.length) {
+      // Continue with the remaining actions only
+      if (this.queue.length && !this.shouldHoldAction()) {
         this.startDispatch(this.queue.shift(), prevState);
       }
     });
