@@ -12,7 +12,7 @@ export type Transition<State, Action> = (nextState: State, prevState: State, act
 export type MapState<State, Result> = (nextState: State, prevState: State) => Result;
 
 function subscribe<K>(array: Array<K>, fn: K) {
-  array.push(fn);
+  array.unshift(fn);
   return () => {
     const idx = array.indexOf(fn);
     if (idx >= 0) {
