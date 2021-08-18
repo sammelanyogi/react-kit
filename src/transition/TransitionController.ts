@@ -7,7 +7,7 @@ export type Anim = {
   stop: () => void,
 };
 
-export type Transition<State, Action> = (nextState: State, prevState: State, action: Action) => null | Anim | Anim[];
+export type Transition<State, Action> = (action: Action, nextState: State, prevState: State) => null | Anim | Anim[];
 
 export type MapState<State, Result> = (nextState: State, prevState: State) => Result;
 
@@ -136,7 +136,7 @@ export class TransitionController<State, Action> {
       }
 
       transitions.forEach(transition => {
-        const anim = transition(nextState, prevState, action);
+        const anim = transition(action, nextState, prevState);
         if (!anim) return;
         if (Array.isArray(anim)) {
           anim.forEach(a => {
