@@ -1,53 +1,63 @@
 # Transition Library
 
-## Hooks
-* `useTransition`: Register an animation to run based on state changes
-* `useTransitionStore`: Get `dispatch` method for registering state changes
-* `useTransitionState`: Map transition store values to render values
+## Transition Lifecyle
+
+1. Dispatch (action) nextState = prevState + action
+2. **useUnmount** hooks (nextState, prevState, action)
+3. Transient **useState** hooks (nextState, prevState)
+4. **useTransition** hooks (nextState, prevState, action);
+5. Stable **useState** hooks (nextState, nextState) -- both states are same in this case
+6. **useMount** hooks (nextState, prevState, action)
+7. Repeat from step 1
+
+Notes:
+* Any action dispatched within the transition lifecyle are queued for sequential execution.
+* The Transient *useState* hook is executed only when any **useTransition** hooks are defined.
+* The Transition library provides **catchup** function to abort any current transition
+  and the backlogs and directly executes the final action. During such update, the prevState
+  would be the one before all the queued actions were dispatched and nextState would
+  be the fresh state after the last action is dispatched.
+
+
+## Usage
 
 ```typescript
-import { createTransitionLibrary } from '@bhoos/transition';
+import { TransitionController } from '@bhoos/transition';
 
-const lib = createTransitionLibrary(0, (state, action: number | Array<number>) => Array.isArray(action) ? action[action.length - 1] : action;
+const GameTransition = new TransitionController(reducer);
 
+function PlayerCards() {
+  const cards = GameTransition.useState(getUserCards);
+  
+  GameTransition.useMount((nextState, prevState, action) => {
+    if (nextState.turn === nextState.userIdx) {
+      // Activate cards
+    }
+  });
+
+  GameTransition.useUnmount((nextState, prevState, action) => {
+    if (action instanceof ThrowCard && prevState.turn === prevState.userIdx) {
+      return throwAnimation(action.card);  
+    }
+  });
+}
+
+
+// Using the transient states
+function RouterPortal() {
+  const screens = RouteTransition.useState((next, prev) => {
+    if (next === prev) return [next];
+    return [prev, next];
+  });
+  
+  RouteTransition.useTransition(next prev) => {
+    // Hide prev and show next
+  });
+
+  screens.map(scr => {
+    // render scr
+  });
+}
 
 ```
 
-function App() {
-  return (
-    <Transition initialState={} reducer={reducer}>
-      {...}
-    </Transition>
-  );
-}
-```
-
-## Initiating changes
-```javascript
-function NextPage() {
-  const dispatch = useTransitionStore();
-  return <Button onPress={() => dispatch('next-page')} />;
-}
-```
-
-## Run animations for transitions
-```javascript
-function extractValue(next, current) {
-  if (next === 'page') return 1;
-  if (current === 'page') return -1;
-  return 0;
-}
-
-function Page() {
-  const driver = useRef();
-  if (!driver.current) driver.current = new Animated.Value(0);
-  useTransition(spring, driver.current, extractValue);
-  const style = createStyle(driver.current);
-
-  return (
-    <Animated.View style={style}>
-      {...}
-    </Animated.View>
-  );
-}
-```
