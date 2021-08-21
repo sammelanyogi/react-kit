@@ -7,12 +7,12 @@ export type Anim = {
   stop: () => void,
 };
 
-export type Transition<State, Action> = (nextState: State, prevState: State, action: Action) => null | Anim | Anim[];
+export type Transition<State, Action> = (action: Action, nextState: State, prevState: State) => null | Anim | Anim[];
 
 export type MapState<State, Result> = (nextState: State, prevState: State) => Result;
 
 function subscribe<K>(array: Array<K>, fn: K) {
-  array.push(fn);
+  array.unshift(fn);
   return () => {
     const idx = array.indexOf(fn);
     if (idx >= 0) {
@@ -37,6 +37,7 @@ export class TransitionController<State, Action> {
   private backLogs: Array<() => void> = [];
 
   private currentAnims: Anim[];
+  private holdingAnims: Anim[] = [];
 
   constructor(reducer: Reducer<State, Action>) {
     this.reducer = reducer;
@@ -47,7 +48,9 @@ export class TransitionController<State, Action> {
     this.currentState = initialState;
 
     // Abort any transitions that are running
-    this.abort();
+    if (this.running) {
+      this.abort();
+    }
 
     // Run all the mounting actions
     this.updateState(this.currentState, this.currentState);
@@ -80,8 +83,12 @@ export class TransitionController<State, Action> {
     }
   }
 
+  private shouldHoldAction() {
+    return this.running || this.holdingAnims.length > 0;
+  }
+
   dispatch(action: Action) {
-    if (this.running) {
+    if (this.shouldHoldAction()) {
       // In case of a queue, push the action to run later
       this.queue.push(action);
       this.backLogs.forEach(cb => cb());
@@ -91,13 +98,31 @@ export class TransitionController<State, Action> {
     }
   }
 
+  hold(animations: Array<Anim>) {
+    // If a transition is in process, then it's not
+    // possible to hold the animations
+    animations.forEach((anim) => {
+      if (!anim) return;
+      this.holdingAnims.push(anim);
+      anim.start(() => {
+        const idx = this.holdingAnims.indexOf(anim);
+        if (idx >= 0) {
+          this.holdingAnims.splice(idx, 1);
+          if (this.holdingAnims.length === 0 && this.queue.length) {
+            this.startDispatch(this.queue.shift(), this.currentState);
+          }
+        }
+      });
+    });
+  }
+
   private runAnimations(transitions: Transition<State, Action>[], nextState: State, prevState: State, action: Action) {
     return new Promise<void>((resolve) => {
       // If there aren't any transitions to run just quit right away
-      if (transitions.length === 0) return;
+      if (transitions.length === 0) return resolve();
     
       // Keep track of number of animations to run to resolve completion
-      let counter = transitions.length;
+      let counter = 0;
 
       // Remember the running animations for aborting
       this.currentAnims = [];
@@ -111,16 +136,25 @@ export class TransitionController<State, Action> {
       }
 
       transitions.forEach(transition => {
-        const anim = transition(nextState, prevState, action);
+        const anim = transition(action, nextState, prevState);
         if (!anim) return;
         if (Array.isArray(anim)) {
-          this.currentAnims.push(...anim);
-          anim.forEach(a => a.start(onEnd));
+          anim.forEach(a => {
+            if (!a) return;
+            counter += 1;
+            this.currentAnims.push(a);
+            a.start(onEnd);
+          });
         } else {
+          counter += 1;
           this.currentAnims.push(anim);
           anim.start(onEnd);
         }
       });
+
+      // It is possible that none of the transitions had any animations to run
+      // So, resolve right away
+      if (counter === 0) resolve();
     });
   }
 
@@ -149,8 +183,8 @@ export class TransitionController<State, Action> {
         this.backLogs.forEach(cb => cb());
       }
 
-      // Continue with the remaining actions
-      if (this.queue.length) {
+      // Continue with the remaining actions only
+      if (this.queue.length && !this.shouldHoldAction()) {
         this.startDispatch(this.queue.shift(), prevState);
       }
     });
