@@ -10,7 +10,8 @@
     "build:cjs": "tsc",
     "build:es6": "mkdir -p es6 && echo '{\"type\":\"module\"}' > es6/package.json && tsc --module es6 --outDir es6",
     "build": "yarn build:cjs && yarn build:es6",
-    "prepublishOnly": "yarn clean && yarn build"
+    "prepublishOnly": "yarn clean && yarn build",
+    "postversion": "git push && git push --tags"
   },
   "files": [
     "dist",
@@ -18,6 +19,7 @@
     "es6",
     "docs"
   ],
+  "repository": "git@github.com:bhoos/react-kit",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
