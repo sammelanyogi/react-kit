@@ -38,9 +38,13 @@ export class TransitionController<State, Action> {
 
   private currentAnims: Anim[];
   private holdingAnims: Anim[] = [];
+  private reactBatchedUpdates: (fn: () => void) => void;
 
-  constructor(reducer: Reducer<State, Action>) {
+  constructor(reducer: Reducer<State, Action>, reactBatchedUpdates?: (fn: () => void) => void) {
     this.reducer = reducer;
+    this.reactBatchedUpdates = reactBatchedUpdates || ((fn: () => void) => {
+      fn();
+    });
   }
 
   reset(initialState: State) {
@@ -223,9 +227,11 @@ export class TransitionController<State, Action> {
   private async updateState(nextState: State, prevState: State) {
     // Run the state updates from the back, to avoid problems that
     // may arise due to array mutation
-    for (let i = this.stateUpdates.length - 1; i >= 0; i -= 1) {
-      this.stateUpdates[i](nextState, prevState);
-    }
+    this.reactBatchedUpdates(() => {
+      for (let i = this.stateUpdates.length - 1; i >= 0; i -= 1) {
+        this.stateUpdates[i](nextState, prevState);
+      }
+    });
     
     // Wait for the state update to complete, except the state update to
     // complete in an event loop
