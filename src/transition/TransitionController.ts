@@ -11,6 +11,10 @@ export type Transition<State, Action> = (action: Action, nextState: State, prevS
 
 export type MapState<State, Result> = (nextState: State, prevState: State) => Result;
 
+type Transitions<State, Action> = Array<
+  Array<Transition<State, Action>>
+>;
+
 function subscribe<K>(array: Array<K>, fn: K) {
   array.unshift(fn);
   return () => {
@@ -20,6 +24,30 @@ function subscribe<K>(array: Array<K>, fn: K) {
     }
   }
 }
+
+function subscribeWithOrder<K>(array: Array<Array<K>>, fn: K, order: number) {
+  if (order < 0) throw new Error('Order can only be positive');
+  if (order in array) {
+    array[order].unshift(fn);
+  } else {
+    array[order] = [fn];
+  }
+
+  return () => {
+    const k = array[order];
+    if (k) {
+      const idx = k.indexOf(fn);
+      if (idx >= 0) {
+        k.splice(idx, 1);
+        // In case all the elements are removed, empty it out
+        if (k.length === 0) {
+          delete array[order];
+        }
+      }
+    }
+  }
+}
+
 
 export class TransitionController<State, Action> {
   private readonly reducer: Reducer<State, Action>
@@ -31,9 +59,9 @@ export class TransitionController<State, Action> {
 
   private stateUpdates: Array<MapState<State, any>> = [];
 
-  private unmounts: Transition<State, Action>[] = [];
-  private transitions: Transition<State, Action>[] = [];
-  private mounts: Transition<State, Action>[] = [];
+  private unmounts: Transitions<State, Action> = [];
+  private transitions: Transitions<State, Action> = [];
+  private mounts: Transitions<State, Action> = [];
   private backLogs: Array<() => void> = [];
 
   private currentAnims: Anim[];
@@ -120,45 +148,57 @@ export class TransitionController<State, Action> {
     });
   }
 
-  private runAnimations(transitions: Transition<State, Action>[], nextState: State, prevState: State, action: Action) {
+  private runAnimations(transitions: Transitions<State, Action>, nextState: State, prevState: State, action: Action) {
     return new Promise<void>((resolve) => {
       // If there aren't any transitions to run just quit right away
-      if (transitions.length === 0) return resolve();
+      if (Object.keys(transitions).length === 0) return resolve();
     
+      // run animations in sequence based on order
+      const seq: Array<Array<Anim>> = [];
+
       // Keep track of number of animations to run to resolve completion
       let counter = 0;
 
-      // Remember the running animations for aborting
-      this.currentAnims = [];
-
-      function onEnd() {
+      const onEnd = () => {
         counter -= 1;
         if (counter === 0) {
+          if (!this.aborted && seq.length) {
+            return startAnimations(seq.shift());
+          }
+
           this.currentAnims = null;
           resolve();
         }
       }
 
-      transitions.forEach(transition => {
-        const anim = transition(action, nextState, prevState);
-        if (!anim) return;
-        if (Array.isArray(anim)) {
-          anim.forEach(a => {
-            if (!a) return;
-            counter += 1;
-            this.currentAnims.push(a);
-            a.start(onEnd);
-          });
-        } else {
-          counter += 1;
-          this.currentAnims.push(anim);
-          anim.start(onEnd);
-        }
+      const startAnimations = (anims: Anim[]) => {
+        this.currentAnims = anims;
+        counter += anims.length;
+        anims.forEach(anim => anim.start(onEnd));
+      }
+
+      transitions.forEach(list => {
+        const anims = list.reduce((res, transition) => {
+          const anim = transition(action, nextState, prevState);
+          if (anim) {
+            if (Array.isArray(anim)) {
+              anim.forEach(a => {
+                if (a) res.push(a);
+              });
+            } else {
+              res.push(anim);
+            }
+          }
+          return res;
+        }, []);
+        if (anims.length === 0) return;
+        seq.push(anims);
       });
 
-      // It is possible that none of the transitions had any animations to run
-      // So, resolve right away
-      if (counter === 0) resolve();
+      if (!seq.length) return resolve();
+
+      // Trigger the animation sequence
+      startAnimations(seq.shift());
     });
   }
 
@@ -248,16 +288,16 @@ export class TransitionController<State, Action> {
     }
   }
 
-  useUnmount<S extends State>(transition: Transition<S, Action>, deps: any[] = []) {
-    useEffect(() => subscribe(this.unmounts, transition), deps);
+  useUnmount<S extends State>(transition: Transition<S, Action>, deps: any[] = [], order: number = 0) {
+    useEffect(() => subscribeWithOrder(this.unmounts, transition, order), deps);
   }
 
-  useMount<S extends State>(transition: Transition<S, Action>, deps: any[] = []) {
-    useEffect(() => subscribe(this.mounts, transition), deps);
+  useMount<S extends State>(transition: Transition<S, Action>, deps: any[] = [], order: number = 0) {
+    useEffect(() => subscribeWithOrder(this.mounts, transition, order), deps);
   }
 
-  useTransition<S extends State>(transition: Transition<S, Action>, deps: any[] = []) {
-    useEffect(() => subscribe(this.transitions, transition), deps);
+  useTransition<S extends State>(transition: Transition<S, Action>, deps: any[] = [], order: number = 0) {
+    useEffect(() => subscribeWithOrder(this.transitions, transition, order), deps);
   }
 
   useState<S extends State, Result>(mapState: MapState<S, Result>, deps: any[] = []): Result {
