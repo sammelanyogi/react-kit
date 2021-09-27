@@ -3,7 +3,7 @@ name: Promote to Production
 
 on:
   release:
-    type: [published]
+    types: [published]
 
 jobs:
   production-release:
