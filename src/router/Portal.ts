@@ -10,7 +10,7 @@ type Props = {
 
 /**
  * A portal renders the current route for the given router,
- * and provides the router to the underlying components viar
+ * and provides the router to the underlying components via
  * context.
  */
 export function Portal({ router, onRouteChange }: Props) {
