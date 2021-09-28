@@ -230,6 +230,7 @@ export class TransitionController<State, Action> {
       // Continue with the remaining actions only
       if (this.queue.length && !this.shouldHoldAction()) {
         this.startDispatch(this.queue.shift(), prevState);
+        this.backLogs.forEach(cb => cb());
       }
     });
   }
@@ -321,13 +322,21 @@ export class TransitionController<State, Action> {
     return value;
   }
 
-  useBackLog(max: number) {
-    const [backlog, setBackLog] = useState(this.queue.length > max);
+  useBackLog(showLevel: number, hideLevel?: number) {
+    const [backlog, setBackLog] = useState(this.queue.length >= showLevel);
+    if (hideLevel === undefined) hideLevel = showLevel;
+
     useEffect(() => {
       return subscribe(this.backLogs, () => {
-        setBackLog(this.queue.length > max);
+        setBackLog((prevVisible) => {
+          if (prevVisible) { 
+            return this.queue.length >= hideLevel;
+          } else {
+            return this.queue.length >= showLevel;
+          }
+        });
       });
-    }, [max]);
+    }, [showLevel, hideLevel]);
 
     return backlog;
   }
