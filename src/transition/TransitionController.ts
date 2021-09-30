@@ -105,7 +105,7 @@ export class TransitionController<State, Action> {
     }
   }
 
-  catchup() {
+  catchup = () => {
     // Set the abort flag
     this.aborted = true;
 
