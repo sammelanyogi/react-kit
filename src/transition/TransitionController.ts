@@ -105,7 +105,7 @@ export class TransitionController<State, Action> {
     }
   }
 
-  catchup() {
+  catchup = () => {
     // Set the abort flag
     this.aborted = true;
 
@@ -300,6 +300,10 @@ export class TransitionController<State, Action> {
     useEffect(() => subscribeWithOrder(this.transitions, transition, order), deps);
   }
 
+  subscribeStateUpdate<S extends State>(cb: (nextState: S, prevState: S) => void) {
+    return subscribe(this.stateUpdates, cb);
+  }
+
   useState<S extends State, Result>(mapState: MapState<S, Result>, deps: any[] = []): Result {
     const [value, setValue] = useState(() => {
       const state = this.currentState as S;
@@ -315,17 +319,17 @@ export class TransitionController<State, Action> {
           setValue(next);
         }
       }
-      return subscribe(this.stateUpdates, cb);
+      return this.subscribeStateUpdate(cb);
     }, deps);
 
     return value;
   }
 
   useBackLog(max: number) {
-    const [backlog, setBackLog] = useState(this.queue.length > max);
+    const [backlog, setBackLog] = useState(this.queue.length > max ? this.catchup : null);
     useEffect(() => {
       return subscribe(this.backLogs, () => {
-        setBackLog(this.queue.length > max);
+        setBackLog(this.queue.length > max ? this.catchup : null);
       });
     }, [max]);
 
