@@ -1,9 +1,11 @@
-import { createElement } from 'react';
+import { createElement, useEffect } from 'react';
 import { Router, RouterContext } from './Router.js';
 import { useRoute } from './hooks.js';
+import { Route } from './Route.js';
 
 type Props = {
   router: Router,
+  onRouteChange?: (nextRoute: Route) => void,
 };
 
 /**
@@ -11,11 +13,17 @@ type Props = {
  * and provides the router to the underlying components via
  * context.
  */
-export function Portal({ router }: Props) {
+export function Portal({ router, onRouteChange }: Props) {
   // List for change on the route
   const route = useRoute(router);
+
+  useEffect(() => {
+    if (onRouteChange && route) onRouteChange(route);
+  }, [route, onRouteChange]);
+
   // Do not render anything until a route is available
   if (!route) return null;
+  
 
   return createElement(RouterContext.Provider, { value: router }, route.createElement());
 }
