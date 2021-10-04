@@ -301,6 +301,10 @@ export class TransitionController<State, Action> {
     useEffect(() => subscribeWithOrder(this.transitions, transition, order), deps);
   }
 
+  subscribeStateUpdate<S extends State>(cb: (nextState: S, prevState: S) => void) {
+    return subscribe(this.stateUpdates, cb);
+  }
+
   useState<S extends State, Result>(mapState: MapState<S, Result>, deps: any[] = []): Result {
     const [value, setValue] = useState(() => {
       const state = this.currentState as S;
@@ -316,7 +320,7 @@ export class TransitionController<State, Action> {
           setValue(next);
         }
       }
-      return subscribe(this.stateUpdates, cb);
+      return this.subscribeStateUpdate(cb);
     }, deps);
 
     return value;
