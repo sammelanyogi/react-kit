@@ -6,7 +6,7 @@ type Transition = {
   confirm: () => void;
   cancel: () => void;
   route: Route;
-}
+};
 export type ConfirmTransition = (transition: Transition) => void;
 type UrlMapper = (url: string, cb: (url: string) => void) => Route | null;
 /**
@@ -19,7 +19,7 @@ export class Router {
   readonly get: EffectHandler<Route>['get'];
   private readonly routeStack: Array<Route> = [];
   private readonly stackSize: number;
-  private readonly mapUrl?: UrlMapper;
+  private mapUrl?: UrlMapper;
   private parentRouter: Router | null;
   private recentUrl: string | null = null;
   private childUrl: string = '';
@@ -40,14 +40,18 @@ export class Router {
 
     this.stackSize = stackSize;
     this.mapUrl = mapUrl;
-
   }
+
+  setMapUrl = (mapUrl: UrlMapper) => {
+    if (this.mapUrl) return;
+    this.mapUrl = mapUrl;
+  };
+
   private getRecentUrl(): string | null {
     if (this.recentUrl) return this.recentUrl;
     if (this.parentRouter) return this.parentRouter.getRecentUrl();
     return null;
   }
-
 
   registerChild = (childRouter: Router) => {
     this.childListeners.push(childRouter);
@@ -57,36 +61,38 @@ export class Router {
       if (index >= 0) {
         this.childListeners.splice(index, 1);
       }
-    }
-  }
+    };
+  };
 
   setChildUrl = (childUrl: string) => {
     this.childListeners.forEach(c => {
       c.pushUrl(childUrl);
-    })
-    this.childUrl=childUrl;
-  }
+    });
+    this.childUrl = childUrl;
+  };
 
   getInitialRoute = (parentRouter: null | Router) => {
     let k = this.get();
     if (k) return k;
-    const url = parentRouter? parentRouter.childUrl :this.getRecentUrl();
+    const url = parentRouter ? parentRouter.childUrl : this.getRecentUrl();
     if (url) {
       k = this.mapUrl(url, this.setChildUrl);
       this.effect.fire(k);
       return k;
     }
     return null;
-  }
+  };
 
   private update = (route: Route) => {
     if (!route === null) {
-      console.warn('Trying to change to an invalid route. This doesn\'t have any effect, but might be a bug on your application');
+      console.warn(
+        "Trying to change to an invalid route. This doesn't have any effect, but might be a bug on your application",
+      );
     }
     this.effect.fire(route);
     // Reset the recent url
     this.recentUrl = null;
-  }
+  };
   /**
    * Change the route to the previous one based on the stack.
    * @returns boolean The return value only indicates if the pop operation
@@ -100,7 +106,7 @@ export class Router {
     const previousRoute = this.routeStack.pop();
     await this.updateRoute(previousRoute, this.update);
     return previousRoute;
-  }
+  };
   /**
    * Change the current route on this router, clearing the stack in process
    * @param route
@@ -115,7 +121,7 @@ export class Router {
     }
     // Perform the transition
     await this.updateRoute(route, this.update);
-  }
+  };
   /**
    * Add route to the router stack. The push will not work if a
    * transition is already in progress, or one of the transition
@@ -135,7 +141,7 @@ export class Router {
       // update the current route
       this.update(route);
     });
-  }
+  };
   private async updateRoute(route: Route, op: (route: Route) => void): Promise<void> {
     // Can't start a transition if a one is already in progress, can't do anything
     if (this.currentTransition) throw new Error('Another route transition is in progress');
@@ -173,11 +179,13 @@ export class Router {
           }
         }
       }
-      this.ConfirmTransitions.forEach(handler => handler({
-        route,
-        cancel: (err?: Error) => complete(null, err),
-        confirm: () => complete(handler),
-      }));
+      this.ConfirmTransitions.forEach(handler =>
+        handler({
+          route,
+          cancel: (err?: Error) => complete(null, err),
+          confirm: () => complete(handler),
+        }),
+      );
     });
   }
   /**
@@ -187,7 +195,7 @@ export class Router {
    */
   setUrl = async (url: string | null): Promise<Route> => {
     return this.updateUrl(url, this.set);
-  }
+  };
   /**
    * Change the route based on the given url. Uses `push(route)` after mapping the url.
    * @param url
@@ -195,10 +203,10 @@ export class Router {
    */
   pushUrl = async (url: string | null): Promise<Route> => {
     if ((url || '').startsWith('/') && this.parentRouter) {
-      this.parentRouter.pushUrl(url)
+      this.parentRouter.pushUrl(url);
     }
     return this.updateUrl(url, this.push);
-  }
+  };
   private async updateUrl(url: string, op: (route: Route) => void): Promise<Route> {
     let newRoute: Route;
     if (this.mapUrl) {
@@ -219,7 +227,7 @@ export class Router {
       this.ConfirmTransitions = this.ConfirmTransitions.filter(k => k !== effect);
       // if the effect is part of the current transition, consider it as a
       // confirmation
-    }
+    };
   }
 }
 /**
