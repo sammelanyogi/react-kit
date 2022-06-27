@@ -230,6 +230,10 @@ export class Router {
       // confirmation
     };
   }
+
+  getPrevRoute() {
+    return this.routeStack.at(-1);
+  }
 }
 /**
  * A default top level router available for all the applications.
