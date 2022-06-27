@@ -84,6 +84,14 @@ export class TransitionController<State, Action> {
       this.abort();
     }
 
+    this.running = false
+    this.aborted = false;
+
+    this.currentAnims = undefined;
+    this.holdingAnims = [];
+    this.queue.length = 0;
+    this.currentState = initialState;
+
     // Run all the mounting actions
     this.updateState(this.currentState, this.currentState);
   }
