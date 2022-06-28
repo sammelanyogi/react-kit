@@ -231,8 +231,12 @@ export class Router {
     };
   }
 
-  getPrevRoute() {
+  getPreviousRoute() {
     return this.routeStack.at(-1);
+  }
+
+  getCurrentRoute() {
+    return this.effect.get();
   }
 }
 /**

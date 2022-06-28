@@ -27,5 +27,9 @@ export function useRouteExit(beforeExit: ConfirmTransition) {
 }
 
 export function usePreviousRoute() {
-  return useRouter().getPrevRoute();
+  return useRouter().getPreviousRoute();
+}
+
+export function useCurrentRoute() {
+  return useRouter().getCurrentRoute();
 }
