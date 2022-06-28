@@ -25,3 +25,11 @@ export function useRouteExit(beforeExit: ConfirmTransition) {
   const router = useRouter();
   useEffect(router.registerConfirm(beforeExit), [beforeExit]);
 }
+
+export function usePreviousRoute() {
+  return useRouter().getPreviousRoute();
+}
+
+export function useCurrentRoute() {
+  return useRouter().getCurrentRoute();
+}

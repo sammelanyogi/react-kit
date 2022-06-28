@@ -1,8 +1,8 @@
 {
   "compileOnSave": true,
   "compilerOptions": {
-    "target": "es2017",
-    "lib": ["es2017", "DOM"],
+    "target": "esnext",
+    "lib": ["esnext", "DOM"],
     "jsx": "react",
     "types": ["react"],
     "module": "commonjs",
