@@ -43,9 +43,9 @@ export class Router {
   }
 
   setMapUrl = (mapUrl: UrlMapper, initialUrl?: string) => { 
-  if (this.mapUrl) throw new Error('Url mapper has already been declared'); 
-  this.mapUrl = mapUrl; 
-  if (initialUrl) this.setUrl(initialUrl); 
+    if (this.mapUrl) console.warn(new Error('Url mapper has already been declared')); 
+    this.mapUrl = mapUrl; 
+    if (initialUrl) this.setUrl(initialUrl); 
   };
 
   private getRecentUrl(): string | null {
@@ -229,6 +229,14 @@ export class Router {
       // if the effect is part of the current transition, consider it as a
       // confirmation
     };
+  }
+
+  getPreviousRoute() {
+    return this.routeStack.at(-1);
+  }
+
+  getCurrentRoute() {
+    return this.effect.get();
   }
 }
 /**
