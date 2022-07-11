@@ -55,7 +55,6 @@ export class Url {
   };
 
   equals(uri: string) {
-    // TODO: Check if the given uri matches this url
-    return false;
+    return uri === this.parts.join('/');
   }
 }
