@@ -1,12 +1,13 @@
 import React, { createElement, useRef, useEffect, useState } from 'react';
 import { Route } from './Route.js';
-import { useRouter, RouterContext, useRouterPortal } from './context.js';
+import { RouterContext, useRouterPortal } from './context.js';
 import { Router } from './Router.js';
 
 type Props = {
   mapRoute: (router: Router) => void;
   home: React.FC;
-  getInitialUrl: () => Promise<string>;
+
+  getInitialUrl?: () => Promise<string>;
 };
 
 export function Portal({ mapRoute, getInitialUrl, home }: Props) {
@@ -22,8 +23,10 @@ export function Portal({ mapRoute, getInitialUrl, home }: Props) {
   useEffect(() => {
     (async () => {
       if (!parentRouter) {
-        const initialUrl = await getInitialUrl();
-        if (initialUrl) return childRouter.push(initialUrl);
+        if (getInitialUrl) {
+          const initialUrl = await getInitialUrl();
+          if (initialUrl) return childRouter.push(initialUrl);
+        }
       } else {
         if (parentRouter.isRemaining()) {
           return childRouter.push(parentRouter.getRemainingUrl());
