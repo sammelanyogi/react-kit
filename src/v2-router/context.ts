@@ -7,6 +7,7 @@ export const RouterContext = createContext<Route | null>(null);
 /**
  * to be used only internally in the library
  * since on calling the router from the first time in the Portal it will return a null.
+ * The null is an absolute necessity to initialize the root router.
  */
 export function useRouterPortal() {
   const route = useContext(RouterContext);
@@ -17,13 +18,16 @@ export function useRouterPortal() {
 
 /**
  * to be used only the App-level
+ * since @useRouterPortal returns a null, we need to check for null in the app-level code.
+ * otherwise, the ts-compiler will complain.
+ * To make it more ergonomic, we simply use **useRouter** in the app-level.
  */
 export function useRouter() {
   const route = useContext(RouterContext);
 
   /**
    * by the time, this hook is called in the app-level
-   * there should be absolute certainity that a Portal has already initialized a router
+   * there should be an absolute certainity that a Portal has already initialized a router
    * if not, we throw an error.
    */
   if (!route) throw new Error('Router Error: Did you wrap your component with Portal');
