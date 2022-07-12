@@ -23,7 +23,7 @@ export class Router {
     this.home = home;
   }
 
-  use<T extends {}>(path: string, Component: React.FC<T>) {
+  public use<T extends {}>(path: string, Component: React.FC<T>) {
     if (!this.currentUrl) return;
 
     const props = this.currentUrl.match(path) as T;
@@ -33,17 +33,14 @@ export class Router {
     }
   }
 
-  show<T extends {}>(Component: React.FC<T>, props: T) {
+  public show<T extends {}>(Component: React.FC<T>, props: T) {
     const route = new Route(this, Component, props);
+
     this.stack.push(route);
-    this.setRoute(route);
+    return this.setRoute(route);
   }
 
-  clearStack() {
-    this.stack.length = 0;
-  }
-
-  pop = () => {
+  public pop = (): void => {
     this.stack.pop();
 
     /** we still have routes left in the current route */
@@ -62,7 +59,7 @@ export class Router {
     }
   };
 
-  push = (uri: string | Url): void => {
+  public push = (uri: string | Url): void => {
     if (typeof uri === 'string') {
       if (uri.startsWith('/') && this.parentRouter) {
         return this.parentRouter.push(uri);
@@ -78,8 +75,8 @@ export class Router {
     this.mapRoute(this);
   };
 
-  reset = () => {
-    this.clearStack();
+  public reset = () => {
+    this.stack.length = 0;
 
     if (this.parentRouter === null) {
       /** now, we have reached the root router, just show the home component */
@@ -90,12 +87,12 @@ export class Router {
     this.parentRouter.reset();
   };
 
-  isRemaining = () => {
+  public isRemaining = () => {
     if (!this.currentUrl) return false;
     return this.currentUrl.isRemaining();
   };
 
-  getRemainingUrl = () => {
+  public getRemainingUrl = () => {
     if (!this.currentUrl) throw new Error('Invalid condition');
 
     const remaining = new Url(this.currentUrl);
@@ -104,12 +101,12 @@ export class Router {
     return remaining;
   };
 
-  getQueryParams = () => {
+  public getQueryParams = () => {
     if (!this.currentUrl) return {};
     return this.currentUrl.query;
   };
 
-  debugRoute() {
+  public debugRoute() {
     return this.stack.map(s => s.component.name).join('/');
   }
 }
