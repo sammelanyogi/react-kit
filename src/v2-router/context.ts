@@ -30,7 +30,11 @@ export function useRouter() {
    * there should be an absolute certainity that a Portal has already initialized a router
    * if not, we throw an error.
    */
-  if (!route) throw new Error('Router Error: Did you wrap your component with Portal');
+  if (!route) {
+    throw new Error(
+      'Router Error: useRouter should always be called within the context of the Portal. \n Did you wrap your component with Portal',
+    );
+  }
 
   return route.router as Router;
 }
