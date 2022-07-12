@@ -1,6 +1,6 @@
 import React, { createElement, useRef, useEffect, useState } from 'react';
 import { Route } from './Route.js';
-import { useRouter, RouterContext } from './context.js';
+import { useRouter, RouterContext, useRouterPortal } from './context.js';
 import { Router } from './Router.js';
 
 type Props = {
@@ -12,7 +12,7 @@ type Props = {
 export function Portal({ mapRoute, getInitialUrl, home }: Props) {
   const [route, setRoute] = useState<Route | null>(null);
 
-  const parentRouter = useRouter();
+  const parentRouter = useRouterPortal();
   const childRouterRef = useRef<Router>();
   if (!childRouterRef.current) {
     childRouterRef.current = new Router(mapRoute, setRoute, parentRouter, home);
