@@ -45,7 +45,7 @@ export class Router {
 
     /** we still have routes left in the current route */
     if (this.stack.length) {
-      return this.setRoute(this.stack.at(-1));
+      return this.setRoute(this.stack[this.stack.length - 1]);
     }
 
     /**
