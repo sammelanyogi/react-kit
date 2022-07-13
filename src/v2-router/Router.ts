@@ -61,6 +61,12 @@ export class Router {
     }
   };
 
+  public set = (uri: string) => {
+    this.stack.length = 0;
+    this.currentUrl = new Url(uri);
+    this.mapRoute(this);
+  };
+
   public push = (uri: string | Url): void => {
     if (typeof uri === 'string') {
       if (uri.startsWith('/') && this.parentRouter) {

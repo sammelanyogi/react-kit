@@ -1,6 +1,6 @@
 import React, { createElement, useRef, useEffect, useState } from 'react';
 import { Route } from './Route.js';
-import { RouterContext, useRouterPortal } from './context.js';
+import { RouterContext, useParentRouter } from './context.js';
 import { Router } from './Router.js';
 
 type Props = {
@@ -15,12 +15,12 @@ export function Portal(props: Props) {
   const { mapRoute, getInitialUrl, home, onRouteChange } = props;
   const [route, setRoute] = useState<Route | null>(null);
 
-  const parentRouter = useRouterPortal();
-  const childRouterRef = useRef<Router>();
-  if (!childRouterRef.current) {
-    childRouterRef.current = new Router(mapRoute, setRoute, parentRouter, home);
+  const parentRouter = useParentRouter();
+  const routerRef = useRef<Router>();
+  if (!routerRef.current) {
+    routerRef.current = new Router(mapRoute, setRoute, parentRouter, home);
   }
-  const childRouter = childRouterRef.current;
+  const childRouter = routerRef.current;
 
   useEffect(() => {
     (async () => {

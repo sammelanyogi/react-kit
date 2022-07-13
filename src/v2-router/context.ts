@@ -9,7 +9,7 @@ export const RouterContext = createContext<Route | null>(null);
  * since on calling the router from the first time in the Portal it will return a null.
  * The null is an absolute necessity to initialize the root router.
  */
-export function useRouterPortal() {
+export function useParentRouter() {
   const route = useContext(RouterContext);
   if (!route) return null;
 
