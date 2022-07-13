@@ -5,12 +5,14 @@ import { Router } from './Router.js';
 
 type Props = {
   mapRoute: (router: Router) => void;
-  home: React.FC;
+  home: React.FC<any>;
 
+  onRouteChange?: (route: Route) => void;
   getInitialUrl?: () => Promise<string>;
 };
 
-export function Portal({ mapRoute, getInitialUrl, home }: Props) {
+export function Portal(props: Props) {
+  const { mapRoute, getInitialUrl, home, onRouteChange } = props;
   const [route, setRoute] = useState<Route | null>(null);
 
   const parentRouter = useRouterPortal();
@@ -43,6 +45,10 @@ export function Portal({ mapRoute, getInitialUrl, home }: Props) {
       childRouter.push(remaining);
     }
   });
+
+  useEffect(() => {
+    if (onRouteChange && route) onRouteChange(route);
+  }, [route, onRouteChange]);
 
   if (!route) return null;
 

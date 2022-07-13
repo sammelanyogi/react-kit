@@ -14,7 +14,7 @@ export class Router {
   private readonly stack: Array<Route> = [];
 
   private currentUrl?: Url;
-  readonly home: React.FC;
+  readonly home: React.FC<any>;
 
   constructor(mapRoute: MapRoute, setRoute: SetRoute, parentRouter: ParentRouter, home: Home) {
     this.setRoute = setRoute;
@@ -34,7 +34,8 @@ export class Router {
   }
 
   public show<T extends {}>(Component: React.FC<T>, props: T) {
-    const route = new Route(this, Component, props);
+    const queryCopy = Object.assign({}, this.currentUrl?.query);
+    const route = new Route(this, Component, props, queryCopy);
 
     this.stack.push(route);
     return this.setRoute(route);
@@ -42,6 +43,7 @@ export class Router {
 
   public pop = (): void => {
     this.stack.pop();
+    this.currentUrl = undefined;
 
     /** we still have routes left in the current route */
     if (this.stack.length) {
@@ -77,6 +79,7 @@ export class Router {
 
   public reset = () => {
     this.stack.length = 0;
+    this.currentUrl = undefined;
 
     if (this.parentRouter === null) {
       /** now, we have reached the root router, just show the home component */
@@ -102,8 +105,7 @@ export class Router {
   };
 
   public getQueryParams = () => {
-    if (!this.currentUrl) return {};
-    return this.currentUrl.query;
+    return this.stack[this.stack.length - 1].params;
   };
 
   public debugRoute() {

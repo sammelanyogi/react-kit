@@ -42,3 +42,8 @@ export function useRouter() {
 export function useRoute() {
   return useContext(RouterContext);
 }
+
+export function useQueryParams() {
+  const router = useRouter();
+  return router.getQueryParams();
+}

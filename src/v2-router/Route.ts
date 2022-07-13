@@ -11,11 +11,13 @@ export class Route<P extends {} = any> {
   readonly router: Router;
   readonly component: Component<P>;
   readonly props?: P;
+  readonly params: {};
 
-  constructor(router: Router, component: Component<P>, props?: P) {
+  constructor(router: Router, component: Component<P>, props?: P, params = {}) {
     this.router = router;
     this.component = component;
     this.props = props;
+    this.params = params;
   }
 
   /**
