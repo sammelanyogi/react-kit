@@ -3,8 +3,8 @@ type Query = {
 };
 
 export class Url {
-  readonly parts: string[];
-  query: Query;
+  private readonly parts: string[];
+  private query: Query;
 
   remaining?: string[];
 
@@ -14,6 +14,8 @@ export class Url {
         .split('/')
         .filter(k => k.trim().length)
         .map(k => k.trim().toLowerCase());
+
+      
       this.query = {};
     } else {
       this.parts = uri.remaining || [];
@@ -21,12 +23,16 @@ export class Url {
     }
   }
 
+  /**
+   * This is a one time function
+   * @param path 
+   * @returns 
+   */
   match(path: string) {
     // Check if the url has already been used
     if (this.remaining) return null;
 
     const parts = path.split('/').filter(k => k.trim().length > 0);
-    if (parts.length === 0) return null;
     if (parts.length > this.parts.length) return null;
 
     const params = Object.assign({}, this.query);
@@ -47,6 +53,10 @@ export class Url {
     // be usable any more
     this.remaining = this.parts.slice(parts.length);
     return params;
+  }
+
+  getRemaining() {
+    return new Url(this);
   }
 
   isRemaining = () => {

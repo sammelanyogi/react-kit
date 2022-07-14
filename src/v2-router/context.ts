@@ -1,8 +1,13 @@
 import { createContext, useContext } from 'react';
 import { Route } from './Route.js';
-import type { Router } from './Router.js';
+import { Router } from './Router.js';
 
-export const RouterContext = createContext<Route | null>(null);
+type ContextType = {
+  route: Route,
+  router: Router,
+}
+
+export const RouterContext = createContext<ContextType | null>(null);
 
 /**
  * to be used only internally in the library
@@ -23,27 +28,29 @@ export function useParentRouter() {
  * To make it more ergonomic, we simply use **useRouter** in the app-level.
  */
 export function useRouter() {
-  const route = useContext(RouterContext);
+  const ctx = useContext(RouterContext);
 
   /**
    * by the time, this hook is called in the app-level
    * there should be an absolute certainity that a Portal has already initialized a router
    * if not, we throw an error.
    */
-  if (!route) {
+  if (!ctx) {
     throw new Error(
       'Router Error: useRouter should always be called within the context of the Portal. \n Did you wrap your component with Portal',
     );
   }
 
-  return route.router as Router;
+  return ctx.router as Router;
 }
 
 export function useRoute() {
-  return useContext(RouterContext);
-}
+  const ctx = useContext(RouterContext);
+  if (!ctx) {
+    throw new Error(
+      'useRoute used outside of context'
+    );
+  }
 
-export function useQueryParams() {
-  const router = useRouter();
-  return router.getQueryParams();
+  return ctx.route;
 }

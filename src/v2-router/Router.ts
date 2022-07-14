@@ -5,22 +5,30 @@ import { Url } from './Url.js';
 type MapRoute = (router: Router) => void;
 type SetRoute = React.Dispatch<React.SetStateAction<Route<any> | null>>;
 type ParentRouter = Router | null;
-type Home = React.FC;
+type Home = React.FC | React.ReactElement;
 
 export class Router {
   private readonly setRoute: SetRoute;
   private readonly parentRouter: ParentRouter;
   private readonly mapRoute: MapRoute;
-  private readonly stack: Array<Route> = [];
+  private readonly stack: Array<Route<any>> = [];
 
   private currentUrl?: Url;
-  readonly home: React.FC<any>;
-
-  constructor(mapRoute: MapRoute, setRoute: SetRoute, parentRouter: ParentRouter, home: Home) {
+  private currentRoute?: Route<any>;
+  
+  constructor(mapRoute: MapRoute, setRoute: SetRoute, parentRouter: ParentRouter) {
     this.setRoute = setRoute;
     this.mapRoute = mapRoute;
     this.parentRouter = parentRouter;
-    this.home = home;
+  }
+
+  getInitialRoute(childRouter: Router) {
+    if (!this.currentUrl || !this.currentUrl.isRemaining()) return null;
+
+    childRouter.currentUrl = this.currentUrl.getRemaining();
+    childRouter.currentRoute = undefined;
+    childRouter.mapRoute(childRouter);
+    return childRouter.currentRoute;
   }
 
   public use<T extends {}>(path: string, Component: React.FC<T>) {
@@ -29,22 +37,21 @@ export class Router {
     const props = this.currentUrl.match(path) as T;
 
     if (props) {
-      return this.show(Component, props);
+      this.currentRoute = new Route(Component, props);
     }
   }
 
-  public show<T extends {}>(Component: React.FC<T>, props: T) {
-    const queryCopy = Object.assign({}, this.currentUrl?.query);
-    const route = new Route(this, Component, props, queryCopy);
+  public show<T extends {}>(route?: Route<T>) {
+    if (route) {
+      this.stack.push(route);
+    }
 
-    this.stack.push(route);
     return this.setRoute(route);
   }
 
   public pop = (): void => {
     this.stack.pop();
-    this.currentUrl = undefined;
-
+    
     /** we still have routes left in the current route */
     if (this.stack.length) {
       return this.setRoute(this.stack[this.stack.length - 1]);
@@ -57,14 +64,13 @@ export class Router {
     if (this.parentRouter) {
       return this.parentRouter.pop();
     } else {
-      return this.show(this.home, {});
+      return this.show(null);
     }
   };
 
   public set = (uri: string) => {
     this.stack.length = 0;
-    this.currentUrl = new Url(uri);
-    this.mapRoute(this);
+    this.push(uri);
   };
 
   public push = (uri: string | Url): void => {
@@ -80,7 +86,11 @@ export class Router {
       this.currentUrl = uri;
     }
 
+
+    this.currentRoute = undefined;
+    // Map routes to correspondint route
     this.mapRoute(this);
+    this.show(this.currentRoute);
   };
 
   public reset = () => {
@@ -89,32 +99,10 @@ export class Router {
 
     if (this.parentRouter === null) {
       /** now, we have reached the root router, just show the home component */
-      return this.show(this.home, {});
+      return this.show(null);
     }
 
     /** clearing all the stack as we propagate back to the root router */
     this.parentRouter.reset();
   };
-
-  public isRemaining = () => {
-    if (!this.currentUrl) return false;
-    return this.currentUrl.isRemaining();
-  };
-
-  public getRemainingUrl = () => {
-    if (!this.currentUrl) throw new Error('Invalid condition');
-
-    const remaining = new Url(this.currentUrl);
-    this.currentUrl = undefined;
-
-    return remaining;
-  };
-
-  public getQueryParams = () => {
-    return this.stack[this.stack.length - 1].params;
-  };
-
-  public debugRoute() {
-    return this.stack.map(s => s.component.name).join('/');
-  }
 }

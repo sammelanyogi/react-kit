@@ -1,4 +1,4 @@
-import React, { createElement, useRef, useEffect, useState } from 'react';
+import React, { createElement, useState } from 'react';
 import { Route } from './Route.js';
 import { RouterContext, useParentRouter } from './context.js';
 import { Router } from './Router.js';
@@ -6,51 +6,24 @@ import { Router } from './Router.js';
 type Props = {
   mapRoute: (router: Router) => void;
   home: React.FC<any>;
-
   onRouteChange?: (route: Route) => void;
-  getInitialUrl?: () => Promise<string>;
 };
 
-export function Portal(props: Props) {
-  const { mapRoute, getInitialUrl, home, onRouteChange } = props;
-  const [route, setRoute] = useState<Route | null>(null);
-
+export function Portal({ mapRoute, home }: Props) {
+  // Get the parent router, this can be null in case of the top level router
   const parentRouter = useParentRouter();
-  const routerRef = useRef<Router>();
-  if (!routerRef.current) {
-    routerRef.current = new Router(mapRoute, setRoute, parentRouter, home);
-  }
-  const childRouter = routerRef.current;
 
-  useEffect(() => {
-    (async () => {
-      if (!parentRouter) {
-        if (getInitialUrl) {
-          const initialUrl = await getInitialUrl();
-          if (initialUrl) return childRouter.push(initialUrl);
-        }
-      } else {
-        if (parentRouter.isRemaining()) {
-          return childRouter.push(parentRouter.getRemainingUrl());
-        }
-      }
+  // Get an initial Route for initial render, the router will always return an
+  // initial route, either via parent router or the default route
+  const [route, setRoute] = useState<Route | null>();
+  const [router] = useState(() => new Router(mapRoute, setRoute, parentRouter));
+  
+  const routeToRender = parentRouter?.getInitialRoute(router) || route || new Route(home);
 
-      childRouter.show(home, {});
-    })();
-  }, []);
-
-  useEffect(() => {
-    if (parentRouter?.isRemaining()) {
-      const remaining = parentRouter.getRemainingUrl();
-      childRouter.push(remaining);
+  return createElement(RouterContext.Provider, { 
+    value: {
+      router,
+      route: routeToRender,
     }
-  });
-
-  useEffect(() => {
-    if (onRouteChange && route) onRouteChange(route);
-  }, [route, onRouteChange]);
-
-  if (!route) return null;
-
-  return createElement(RouterContext.Provider, { value: route }, route?.createElement());
+  }, routeToRender.createElement());
 }
