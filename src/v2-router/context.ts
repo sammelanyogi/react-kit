@@ -1,13 +1,15 @@
-import { createContext, useContext } from 'react';
-import { Route } from './Route.js';
+import React, { createContext, useContext } from 'react';
 import { Router } from './Router.js';
+import { UrlParser } from './Url.js';
+
 
 type ContextType = {
-  route: Route,
   router: Router,
+  url: UrlParser,
 }
 
 export const RouterContext = createContext<ContextType | null>(null);
+
 
 /**
  * to be used only internally in the library
@@ -44,13 +46,3 @@ export function useRouter() {
   return ctx.router as Router;
 }
 
-export function useRoute() {
-  const ctx = useContext(RouterContext);
-  if (!ctx) {
-    throw new Error(
-      'useRoute used outside of context'
-    );
-  }
-
-  return ctx.route;
-}

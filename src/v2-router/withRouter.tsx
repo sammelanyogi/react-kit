@@ -1,28 +1,38 @@
-import React, { createElement, useCallback, useEffect, useState } from "react";
-import { Portal } from "./Portal.js";
-import { Router } from "./Router.js";
+import React, { useEffect, useState } from "react";
+import { RouterContext } from "./context.js";
+import { UrlParser } from "./Url.js";
 
 export function withRouter<T extends {}>(App: React.FC<T>, getInitialUrl: () => Promise<string>) {
-
-  const mapRoute = (router: Router) => {
-    router.use('/', null);
-  };
-
   return (props: T) => {
     // Add a state to detect the initial url
-    const [initialUrl, setInitialUrl] = useState(getInitialUrl ? null : '/');
+    const [url, setUrl] = useState<UrlParser>(getInitialUrl ? null : UrlParser.create('/'));
+    const [rootRouter] = useState(() => {
+      return {
+        show() {
+          console.error(new Error(`Root level router doesn't support displaying routes directly`));
+        },
+        push(url: string) {
+          setUrl(UrlParser.create(url));
+        },
+        pop() {
+          
+        },
+      }
+    });
 
     useEffect(() => {
       if (getInitialUrl) {
-        getInitialUrl().then(url => setInitialUrl(url || '/'));
+        getInitialUrl().then(url => setUrl(UrlParser.create(url || '/')));
       }
     }, []);
-
+  
     // When loading the initial url, avoid rendering the app
-    if (!initialUrl) return null;
+    if (!url) return null;
     
     return (
-      <Portal mapRoute={mapRoute} home={() => <App {...props} />} />
+      <RouterContext.Provider value={{ router: rootRouter, url }}>
+        <App {...props} />
+      </RouterContext.Provider>
     );
   }
 }
