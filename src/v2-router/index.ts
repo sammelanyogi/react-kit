@@ -1,3 +1,4 @@
 export { Portal } from './Portal.js';
 export type { Router } from './Router.js';
-export { useRouter, useQueryParams } from './context.js';
+export { useRouter } from './context.js';
+export { withRouter } from './withRouter.js';

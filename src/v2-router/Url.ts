@@ -16,19 +16,10 @@ export class UrlParser {
   private constructor(url: string)
   private constructor(url: string | string[], query?: Query) {
     if (typeof url === 'string') {
-      // Split the url into path and query string
-      const queryStart = url.indexOf('?');
-      let path = url;
-      if (queryStart >= 0) {
-        path = url.substring(0, queryStart - 1);
-        const params = url.substring(queryStart + 1).split('&');
-        params.forEach((param) => {
-          const [name, value] = param.split('=', 2);
-          this.query[name] = value;
-        });
-      }
+      const [urlPath, searchQueryPath] = url.split('?');
 
-      this.parts = path.split('/').map(k => k.trim()).filter(k => k.length > 0);
+      this.parts = splitUrlPath(urlPath);
+      this.query = splitSearchPath(searchQueryPath);
     } else {
       this.parts = url;
       this.query = query;
@@ -51,8 +42,8 @@ export class UrlParser {
 
     const parts = path.split('/').filter(k => k.trim().length > 0);
     if (parts.length > this.parts.length) return null;
-    
-    const params: { [name: string]: string } = {};
+
+    const params: Record<string, string> = {};
 
     for (let i = 0; i < parts.length; i += 1) {
       const part = parts[i];
@@ -84,4 +75,24 @@ export class UrlParser {
   get route() {
     return this._route;
   }
+}
+
+function splitUrlPath(urlPath: string) {
+  return urlPath
+    .split('/')
+    .filter(k => k.trim().length)
+    .map(k => k.trim().toLowerCase());
+}
+
+function splitSearchPath(search: string) {
+  if (!search) return {};
+
+  const searchQueryPathBroken: Record<string, string> = {};
+
+  search.split('&').forEach(query => {
+    const [left, right] = query.split('=');
+    searchQueryPathBroken[left] = right;
+  });
+
+  return searchQueryPathBroken;
 }

@@ -15,8 +15,9 @@ export function withRouter<T extends {}>(App: React.FC<T>, getInitialUrl: () => 
           setUrl(UrlParser.create(url));
         },
         pop() {
-          
+          setUrl(UrlParser.create('/'));
         },
+        reset() {}
       }
     });
 
@@ -25,7 +26,6 @@ export function withRouter<T extends {}>(App: React.FC<T>, getInitialUrl: () => 
         getInitialUrl().then(url => setUrl(UrlParser.create(url || '/')));
       }
     }, []);
-  
     // When loading the initial url, avoid rendering the app
     if (!url) return null;
     

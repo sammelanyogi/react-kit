@@ -22,10 +22,19 @@ function convertRoute(route: UrlParser | Route, mapRoute: MapRoute, home: React.
   remaining: UrlParser | null,
   element: React.ReactElement,
 } {
-  if (!(route instanceof UrlParser)) return {
-    remaining: null,
-    element: route.createElement(),
-  };
+  if (route === null) {
+    return {
+      remaining: null,
+      element: React.createElement(home),
+    }
+  }
+
+  if (!(route instanceof UrlParser)) { 
+    return {
+      remaining: null,
+      element: route.createElement(),
+    };
+  }
 
   const parser = route;
   mapRoute(parser);
@@ -49,7 +58,7 @@ export function Portal({ name, mapRoute, home }: Props) {
   // Get the parent router, this can be null in case of the top level router
   const { url, router: parentRouter } = useContext(RouterContext);
 
-  const forwardedUrl = useRef(url);
+  const forwardedUrl = useRef();
 
   // Get an initial Route for initial render, the router will always return an
   // initial route, either via parent router or the default route
