@@ -20,6 +20,12 @@ export class PortalRouter implements Router {
     this.setRoute = setRoute;
   }
 
+  static create<T>(parentRouter: Router, setRoute: SetRoute, homeRoute: Route<T>) {
+    const router = new PortalRouter(parentRouter, setRoute);
+    router.stack.push(homeRoute);
+    return router;
+  }
+
   show<T extends {}>(route: Route<T>) {
     this.stack.push(route);
     this.setRoute(route);
@@ -45,6 +51,6 @@ export class PortalRouter implements Router {
 
   public set = (url: string): void => {
     this.stack.length = 0;
-    this.push(url);
+    return this.push(url);
   };
 }
