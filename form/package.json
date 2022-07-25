@@ -1,0 +1,9 @@
+{
+  "name": "@bhoos/react-kit-form",
+  "version": "1.0.0",
+  "description": "Bhoos Form Library",
+  "main": "src/index.ts",
+  "repository": "https://github.com/bhoos/react-kit",
+  "author": "Ranjan Shrestha",
+  "license": "MIT"
+}

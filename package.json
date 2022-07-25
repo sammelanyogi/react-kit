@@ -2,6 +2,9 @@
   "name": "@bhoos/react-kit",
   "version": "2.0.15",
   "description": "Bhoos React Library",
+  "workspaces": [
+    "form"
+  ],
   "main": "dist/index.js",
   "module": "es6/index.js",
   "react-native": "src/index.ts",
