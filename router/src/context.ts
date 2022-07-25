@@ -5,10 +5,10 @@ import { UrlParser } from './Url.js';
 
 type ContextType = {
   router: Router,
-  url: UrlParser,
+  url: null | UrlParser,
 }
 
-export const RouterContext = createContext<ContextType | null>(null);
+export const RouterContext = createContext<ContextType>(null as never as ContextType);
 
 
 /**

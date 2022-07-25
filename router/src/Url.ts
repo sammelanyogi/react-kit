@@ -10,11 +10,11 @@ export class UrlParser {
   private readonly query: Query = {};
 
   private _remaining: UrlParser | null = null;
-  private _route: Route = null;
+  private _route: Route | null = null;
 
   private constructor(parts: string[], query: Query)
   private constructor(url: string)
-  private constructor(url: string | string[], query?: Query) {
+  private constructor(url: string | string[], query: Query = {}) {
     if (typeof url === 'string') {
       const [urlPath, searchQueryPath] = url.split('?');
 

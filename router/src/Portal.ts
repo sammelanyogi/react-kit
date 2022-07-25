@@ -60,12 +60,12 @@ export function Portal({ name, mapRoute, home }: Props) {
   // Get the parent router, this can be null in case of the top level router
   const { url, router: parentRouter } = useContext(RouterContext);
 
-  const forwardedUrl = useRef<UrlParser>();
+  const forwardedUrl = useRef<UrlParser | null>(null);
 
   // Get an initial Route for initial render, the router will always return an
   // initial route, either via parent router or the default route
   const [route, setRoute] = useState<Route | UrlParser>(() => new Route(home));
-  const [router] = useState(() => PortalRouter.create(parentRouter, setRoute, route as Route));
+  const [router] = useState(() => PortalRouter.create(parentRouter, setRoute));
   
   let routeToRender = route;
 

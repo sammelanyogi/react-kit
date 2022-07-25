@@ -2,10 +2,10 @@ import React, { useEffect, useState } from "react";
 import { RouterContext } from "./context.js";
 import { UrlParser } from "./Url.js";
 
-export function withRouter<T extends {}>(App: React.FC<T>, getInitialUrl: () => Promise<string>) {
+export function withRouter<T extends {}>(App: React.FC<T>, getInitialUrl?: () => Promise<string>) {
   return (props: T) => {
     // Add a state to detect the initial url
-    const [url, setUrl] = useState<UrlParser>(getInitialUrl ? null : UrlParser.create('/'));
+    const [url, setUrl] = useState<null | UrlParser>(getInitialUrl ? null : UrlParser.create('/'));
     const [rootRouter] = useState(() => {
       return {
         show() {

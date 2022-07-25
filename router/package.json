@@ -1,7 +1,7 @@
 {
-  "name": "@bhoos/react-kit-form",
+  "name": "@bhoos/react-kit-router",
   "version": "2.0.0",
-  "description": "Bhoos Form Library",
+  "description": "Bhoos Router Library",
   "main": "src/index.ts",
   "peerDependencies": {
     "react": ">=17"
