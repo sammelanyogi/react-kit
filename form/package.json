@@ -1,6 +1,6 @@
 {
   "name": "@bhoos/react-kit-form",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Bhoos Form Library",
   "main": "src/index.ts",
   "peerDependencies": {

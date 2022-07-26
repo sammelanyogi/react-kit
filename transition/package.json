@@ -1,6 +1,6 @@
 {
   "name": "@bhoos/react-kit-transition",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Bhoos Transition Library",
   "main": "src/TransitionController.ts",
   "peerDependencies": {
