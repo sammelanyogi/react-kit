@@ -3,3 +3,4 @@ dist
 es6
 .DS_Store
 .vscode
+lerna-debug.log
