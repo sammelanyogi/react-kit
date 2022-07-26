@@ -8,6 +8,7 @@ export interface Router {
   show<T extends {}>(route: Route<T>): void;
   push(url: string): void;
   pop(): void;
+  reset(): void;
 }
 
 export class PortalRouter implements Router {
@@ -44,6 +45,11 @@ export class PortalRouter implements Router {
     const last = this.stack[this.stack.length - 1];
     return this.setRoute(typeof last === 'string' ? UrlParser.create(last) : last);
   };
+
+  public reset() {
+    this.stack.length = 0;
+    this.parentRouter.reset();
+  }
 
   public set = (url: string): void => {
     this.stack.length = 0;

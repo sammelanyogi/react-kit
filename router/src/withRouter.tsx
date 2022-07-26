@@ -17,7 +17,9 @@ export function withRouter<T extends {}>(App: React.FC<T>, getInitialUrl?: () =>
         pop() {
           setUrl(UrlParser.create('/'));
         },
-        reset() {}
+        reset() {
+          setUrl(UrlParser.create('/'));
+        }
       }
     });
 
