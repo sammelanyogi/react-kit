@@ -5,7 +5,7 @@ import { UrlParser } from './Url.js';
 type SetRoute = React.Dispatch<React.SetStateAction<Route<any> | UrlParser>>;
 
 export interface Router {
-  show<T extends {}>(route: Route<T>): void;
+  show<T extends {}>(Component: React.FC<T>, props?: T): void;
   push(url: string): void;
   pop(): void;
   reset(): void;
@@ -25,7 +25,8 @@ export class PortalRouter implements Router {
     return new PortalRouter(parentRouter, setRoute);
   }
 
-  show<T extends {}>(route: Route<T>) {
+  show<T extends {}>(Component: React.FC<T>, props?: T) {
+    const route = new Route(Component, props);
     this.stack.push(route);
     this.setRoute(route);
   }
