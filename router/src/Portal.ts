@@ -4,7 +4,7 @@ import { RouterContext } from './context.js';
 import { PortalRouter } from './Router.js';
 import { UrlParser } from './Url.js';
 
-type MapRouter = {
+export type MapRouter = {
   use(path: string, Comp: React.FC): void;
 }
 
