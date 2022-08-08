@@ -2,11 +2,16 @@ import React, { Profiler } from 'react';
 import { withRouter } from '@bhoos/react-kit-router';
 import { TabRouter } from "./TabRouter.js";
 import { Home, homeIcon } from './Home.js';
-import { SafeAreaView } from 'react-native';
+import { SafeAreaView, View, StyleSheet } from 'react-native';
 import { Wizard, wizardIcon } from './Wizard.js';
 import { Profile, profileIcon } from './Profile.js';
+import { withModal } from '@bhoos/react-kit-modal';
 
-export const App = withRouter('profile')(() => {
+const ModalWrapper = ({ children }) => {
+  return <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.6)', paddingTop: 25 }]}>{children}</View>
+}
+
+export const App = withModal(ModalWrapper)(withRouter('profile')(() => {
   return (
     <SafeAreaView style={{flex: 1}}>
       <TabRouter
@@ -31,4 +36,4 @@ export const App = withRouter('profile')(() => {
       />
     </SafeAreaView>
   )
-})
+}));
