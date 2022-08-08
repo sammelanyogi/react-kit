@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { View, Text, TouchableOpacity } from "react-native";
 import { MapRouter, Outlet, Route, RouteState, useNavigate } from '@bhoos/react-kit-router';
+import { H1, H2 } from './TextStyles';
 
 export const wizardIcon = require('./wizard.png');
 
@@ -13,7 +14,7 @@ export function Page1() {
 
   return (
     <View>
-      <Text>Page 1</Text>
+      <H2>Page 1</H2>
       <TouchableOpacity onPress={() => navigate('page2')}><Text>Next</Text></TouchableOpacity>
     </View>
   )
@@ -24,7 +25,7 @@ export function Page2() {
 
   return (
     <View>
-      <Text>Page 2</Text>
+      <H2>Page 2</H2>
       <TouchableOpacity onPress={() => navigate('page1')}><Text>Back</Text></TouchableOpacity>
       <TouchableOpacity onPress={() => navigate('page1')}><Text>Submit</Text></TouchableOpacity>
     </View>
@@ -47,7 +48,7 @@ export function Wizard() {
 
   return (
     <View>
-      <Text>Wizard</Text>
+      <H1>Wizard</H1>
       <Route mapRoute={mapRoute}>
         <Outlet />
       </Route>

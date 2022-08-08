@@ -59,12 +59,12 @@ export function TabRouter({ tabs, defaultTab }: Props) {
 
   return (
     <Route mapRoute={mapRoute}>
-      <View style={styles.container}>
-        <View style={{flex: 1}}>
+      {/* <View style={styles.container}> */}
+        <View style={{flex: 1, padding: 10}}>
           <Outlet />
         </View>
         <TabNavigation tabs={tabs} />
-      </View >
+      {/* </View > */}
     </Route>
   );
 }
