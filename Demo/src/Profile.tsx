@@ -1,5 +1,5 @@
-import { useModal, useModalClose } from '@bhoos/react-kit-modal';
-import React from 'react';
+import { Modal } from '@bhoos/react-kit-modal';
+import React, { useState, useRef } from 'react';
 import { Button, Text, View } from 'react-native';
 import { H1 } from './TextStyles';
 
@@ -7,10 +7,10 @@ export const profileIcon = require('./profile.png');
 
 type UserProfile = {
   name: string,
+  close: (res?: UserProfile) => void,
 }
 
-function UserInfo({ profile }: { profile: UserProfile }) {
-  const close = useModalClose()
+function UserInfo({ profile, close }: { profile: UserProfile }) {
   return (
     <View>
       <Text>{profile.name}</Text>
@@ -22,18 +22,27 @@ function UserInfo({ profile }: { profile: UserProfile }) {
 }
 
 export function Profile() {
-  const modal = useModal();
+  const [visible, setVisible] = useState(false);
 
   function showProfile() {
-    modal.show(() => <UserInfo profile={{ name: 'Hello' }} />, (res) => {
-      console.log('Modal hide', res);
-    });
+    setVisible(true);
+    // modalRef.current.show((res) => {
+    //   console.log('How', res);
+    // });
   }
+
+  const modalRef = useRef();
 
   return (
     <>
       <H1>Profile</H1>
       <Button onPress={showProfile} title="Show Profile" />
+      <Modal visible={visible} ref={modalRef}>
+        <UserInfo profile={{ name: 'Hello' }} close={() => {
+          setVisible(false); 
+          // modalRef.current.hide(false);
+        }} />
+      </Modal>
     </>
   )
 }
