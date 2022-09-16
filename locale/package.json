@@ -1,0 +1,12 @@
+{
+  "name": "@bhoos/react-kit-locale",
+  "version": "2.0.1",
+  "description": "Bhoos Localization Library",
+  "main": "src/locale.ts",
+  "peerDependencies": {
+    "react": ">=17"
+  },
+  "repository": "https://github.com/bhoos/react-kit",
+  "author": "Ranjan Shrestha",
+  "license": "MIT"
+}
