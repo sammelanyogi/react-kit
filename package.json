@@ -8,8 +8,7 @@
     "locale",
     "modal",
     "router",
-    "transition",
-    "Demo"
+    "transition"
   ],
   "scripts": {
   },
