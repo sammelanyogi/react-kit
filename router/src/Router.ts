@@ -1,24 +1,23 @@
 import React from 'react';
-import { MapRoute, RouteState } from './Route.js';
+import { MapRoute } from './Route.js';
 import { UrlParser } from './Url.js';
 
-type SetRouteState<T extends RouteState> = React.Dispatch<React.SetStateAction<T>>
+type SetRouteState<T> = React.Dispatch<React.SetStateAction<T>>
 
 type NavigationOptions = {
   replace?: boolean,
 }
 
-export class Router<T extends RouteState> {
-  /**
-   * The child routers. There is typically one child per router, but
-   * as per use case, there can be multiple routers within a router.
-   */
-  private readonly children: Array<Router<any>> = [];
-
+export class Router<T> {
   /**
    * The parent router for this router
    */
   private readonly parent: Router<any>;
+  private map: MapRoute<T>;
+
+  protected childUrl: string | string[];
+  private readonly defaultRoute: T;
+  private currentRoute: T;
 
   /**
    * The route change listeners. There must be at least one Route
@@ -26,101 +25,116 @@ export class Router<T extends RouteState> {
    */
   private readonly routeSubscriptions: Array<SetRouteState<T>> = [];
 
-  // The current route that is mounted
-  private currentRoute: T;
-  private currentRouteProps: {};
-
-  // The path used to mount the route
-  private mountPath: string;
-
-  // The path remaining after the mount path was
-  // mounted. This path is used by the children for their
-  // own mounting
-  private remainingPath: string = '';
-
-  private readonly mapRoute: MapRoute<T>;
-
-  // A navigation stack maintained by the parent rounter
-  private navigationStack: string[];
-
-  constructor(parent: Router<any>, mapRoute: MapRoute<T>, remainingPath: string = '') {
-    this.parent = parent;
-    this.mapRoute = mapRoute;
-    this.remainingPath = remainingPath;
-
-    if (parent !== null) {
-      this.mount(parent.remainingPath);
-    }
-  }
-
-  getMountInfo() { 
-    return {
-      mountPath: this.mountPath,
-      route: this.currentRoute,
-      props: this.currentRouteProps,
-    };
-  };
-
-
-  registerChild(child: Router<any>) {
-    this.children.push(child);
-    return () => {
-      const idx = this.children.indexOf(child);
-      if (idx >= 0) this.children.splice(idx, 1);
-    }
-  }
-
-  navigate(to: string, options?: NavigationOptions) {
-    if (to.startsWith('/')) {
-      // Any path starting with '/' will have to be handled by the root router
-      this.parent.navigate(to, options);
-    } else if (to.startsWith('../')) {
-      // Any path starting with '..' will have to be handled by the parent router
-      this.parent.navigate(to.substring(3));
+  constructor(parent: Router<any> | string, map: MapRoute<T>, defaultRoute: T) {
+    if (typeof parent === 'string') {
+      this.childUrl = parent;
+      this.parent = null;
     } else {
-      // Update the route on the parent router, which should trigger all the children
-      this.parent.update(to, options);
+      this.parent = parent;
+    }
 
-      this.parent.updateStack(0, this.mountPath, options && options.replace);
+    this.map = map;
+
+    this.defaultRoute = defaultRoute;
+    this.currentRoute = defaultRoute;
+    this.updateRoute();
+  }
+
+  /**
+   * Handle changes to the mapping function
+   * @param map 
+   * @returns 
+   */
+  updateMap(map: MapRoute<T>) {
+    if (map === this.map) return;
+    this.map = map;
+
+    this.updateRoute();
+  }
+
+  updateChild(router: Router<any>) {
+    // NO effect, overridden by RootRouter for updating the root level component
+  }
+
+  get url() {
+    if (typeof this.parent.childUrl === 'string') {
+      return this.parent.childUrl;
+    } else {
+      return this.parent.childUrl[0];
     }
   }
 
-  update(childPath: string, options?: NavigationOptions) {
-    this.children.forEach((child) => {
-      child.mount(childPath);
-    });
+  /**
+   * Update currentRoute based on the url (parent.childUrl) and the route mapper
+   */
+  updateRoute() {
+    const urlMapper = new UrlParser<T>(this.url);
+
+    this.map(urlMapper);
+    
+    if(urlMapper.matched) {
+      if (typeof this.parent.childUrl === 'string') {
+        this.childUrl = urlMapper.matched.remainingUrl;
+      } else {
+        this.childUrl = this.parent.childUrl.slice(1);
+        if (this.childUrl[0] === undefined) {
+          this.childUrl[0] = urlMapper.matched.remainingUrl;
+        }
+      }
+
+      this.changeRoute(urlMapper.matched.route);
+    } else {
+      // Render default route in case the url didn't match anything
+      this.changeRoute(this.defaultRoute);
+    }
   }
 
-  updateStack(depth: number, mountPath: string, replace: boolean) {
-    this.parent.updateStack(depth + 1, mountPath, replace);
+  private changeRoute(route: T) {
+    if (route === this.currentRoute) return;
+    this.currentRoute = route;
+    this.routeSubscriptions.forEach(sub => sub(route));
+  }
+
+  protected consume(url: string, options: NavigationOptions) {
+    console.log('Consume url', url);
+    if (url.startsWith('/')) {
+      if (this.parent.consume(url, options)) this.updateRoute();
+    } else if (url.startsWith('../')) {
+      let startOffset = 3;
+      while (url.charAt(startOffset) === '/') startOffset += 1;
+      if (this.parent.consume(url, options)) this.updateRoute();
+    } else {
+      // the url is consumed by setting the childUrl property on the parent router
+      // this flow is used for the root router to update the root level route
+      this.parent.childUrl = url;
+      this.updateStack(url, (options && options.replace), -1);
+      return true;
+    }
+
+    return false;
+  }
+
+  navigate(to: number): void
+  navigate(to: string, options?: NavigationOptions): void
+  navigate(to: number | string, options?: NavigationOptions) {
+    if (typeof to === 'number') {
+      if (to >= 0) return;
+      this.pop()
+    } else {
+      if (this.consume(to, options)) this.updateRoute();
+    }
+  }
+
+  protected pop() {
+    this.parent.pop();
+  }
+
+  protected updateStack(url: string, replace: boolean, depth: number) {
+    this.parent.updateStack(url, replace, depth + 1);
   }
 
   getCurrentRoute() {
     return this.currentRoute;
-  }
-
-  mount(path: string) {
-    if (this.mountPath === path) return;
-
-    this.mountPath = path;
-    const urlParser = new UrlParser<T>(path);
-    const defaultRoute = this.mapRoute(urlParser);
-    
-    if (urlParser.matched) {
-      this.currentRoute = urlParser.matched.route;
-      this.currentRouteProps = urlParser.matched.props;
-      this.remainingPath = urlParser.matched.remainingUrl;
-    } else {
-      this.currentRoute = defaultRoute;
-      // we are resorting to default Route since no match
-      // was found
-      this.remainingPath = '';
-    }
-
-    // Fire the subscriptions for the current route
-    this.routeSubscriptions.forEach((sub) => {
-      sub(this.currentRoute);
-    });
   }
 
   subscribe(updateRoute: SetRouteState<T>) {
@@ -132,79 +146,85 @@ export class Router<T extends RouteState> {
   }
 }
 
-class TreeStack {
-  path: string;
-  stack: Array<TreeStack> = [];
-
-  constructor(path: string) {
-    this.path = path;
-  }
-
-  update(depth: number, path: string, replace: boolean) {
-    if (depth === 0) {
-      this.stack.unshift(new TreeStack(path));
-    } else {
-      if (this.stack.length === 0) {
-        this.stack.unshift(new TreeStack(''));
-      }
-      this.stack[0].update(depth - 1, path, replace);
-    }
-  }
-
-  toString(indent: number = 0) {
-    let str = `${' '.repeat(indent * 4)} - [${this.path}]`;
-    for (let i = 0; i < this.stack.length; i += 1) {
-      str += "\n" + this.stack[i].toString(indent + 1);
-    }
-    return str;
-  }
-
-  static recursiveUpdate(target: Array<TreeStack>, depth: number, path: string, replace: boolean) {
-    if (depth === 0) {
-      if (replace) {
-        target[0] = new TreeStack(path);
-      } else {
-        target.unshift(new TreeStack(path));
-      }
-    } else {
-      if (target.length === 0) {
-        target.unshift(new TreeStack(''));
-      }
-      target[0].update(depth - 1, path, replace);
-    }
-  }
-
-  static debug(depth: number, stack: Array<TreeStack>) {
-    for (const tree of stack) {
-      console.log(' '.repeat(depth * 2), tree.path);
-      this.debug(depth + 1, tree.stack);
-    }
-  }
-}
-
 export class RootRouter extends Router<any> {
   // Initial stackTree with the initial Url
-  private stack: Array<TreeStack> = [];
+  private stack: Array<{ depth: number, url: string }> = [];
+  private child: Router<any>;
 
   constructor(initialUrl: string) {
-    super(null, null, initialUrl);
-    this.stack.unshift(new TreeStack(initialUrl));
+    super(initialUrl, null, null);
+    this.stack.push({
+      depth: 0,
+      url: initialUrl,
+    });
   }
 
-  updateStack(depth: number, path: string, replace: boolean) {
-    TreeStack.recursiveUpdate(this.stack, depth, path, replace);
-
-    TreeStack.debug(0, this.stack);
+  protected updateStack(url: string, replace: boolean, depth: number) {
+    console.log(`Update Stack replace=${replace}`)
+    if (replace) {
+      // Replace until we have a higher depth
+      while (this.stack.length > 0) {
+        const peek = this.stack[this.stack.length - 1];
+        // Cannot replace with lower depth
+        if (peek.depth < depth) break;
+        this.stack.pop();
+        if (peek.depth === depth) break;
+      }
+    } 
+      
+    this.stack.push({ depth, url });
+    console.log('Current Stack', this.stack);
   }
 
-  navigate(to: string, options?: NavigationOptions) {
+  protected pop() {
+    console.log('Current Stack before pop', this.stack);
+    // Generate a call stack for the the last data on stack
+    if (this.stack.length === 0) {
+      this.childUrl = '';
+      if (this.child) this.child.updateRoute();
+      return;
+    }
+
+    this.stack.pop();
+
+    // We got no where to go
+    if (this.stack.length === 0) {
+      this.childUrl = '';
+      if (this.child) this.child.updateRoute();
+      return;
+    }
+
+    const peeked = this.stack[this.stack.length - 1];
+    this.childUrl = new Array(peeked.depth + 1);
+
+    this.childUrl[peeked.depth] = peeked.url;
+    let lastDepth = peeked.depth;
+    if (this.stack.length > 1) {
+      for (let i = this.stack.length - 2; i >= 0; i -= 1) {
+        const item = this.stack[i];
+        if (item.depth < lastDepth) {
+          this.childUrl[item.depth] = item.url;
+          if (item.depth === 0) break;
+        }
+      }
+    }
+
+    if (this.child) this.child.updateRoute();
+  }
+
+  updateChild(router: Router<any>): void {
+    this.child = router;
+  }
+
+  protected consume(url: string) {
     // get rid of the slashes and continue the update
     let pos = 0;
-    while (to.charAt(pos) === '/') { pos += 1; };
-    const childPath = to.substring(pos);
+    while (url.charAt(pos) === '/') pos += 1;
+    this.childUrl = url.substring(pos);
+    return true;
+  }
 
-    this.update(childPath, options);
+  updateRoute(): void {
+    // Root router cannot update the route
   }
 }
-
-

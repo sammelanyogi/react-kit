@@ -1,34 +1,37 @@
-import React, { useEffect, useMemo, useContext, useState, Suspense } from "react";
+import React, { useEffect, useMemo, useContext, useState, Suspense, ReactElement } from "react";
 import { RootRouter, Router } from "./Router";
 
-export type RouteState = {
-  Component: React.FC,
+export interface MapRequest {
+  readonly query: Record<string, string>;
+  readonly param: Record<string, string>;
 }
 
-export interface MapRouter<T extends RouteState> {
-  use(path: string, route: T): void;
+export interface MapRouter<T> {
+  use(path: string, createRoute: (req: MapRequest) => T): void;
 }
 
-export type MapRoute<T extends RouteState> = (router: MapRouter<T>) => T
+export type MapRoute<T> = (router: MapRouter<T>) => void;
 
-type Props<T extends RouteState> = {
-  mapRoute: MapRoute<T>,
-  children: React.ReactElement | Array<React.ReactElement>,
+type Props<T> = {
+  map: MapRoute<T>,
+  defaultRoute: T,
+  children: ReactElement | Array<ReactElement>
 }
 
 const RouteContext = React.createContext<Router<any>>(null);
 
-export function Route<T extends RouteState>({ mapRoute, ...other }: Props<T>) {
+export function Route<T>({map, defaultRoute, ...other}: Props<T>) {
   const parentRouter = useContext(RouteContext);
-
-  const router = useMemo(() => new Router(parentRouter, mapRoute), [mapRoute]);
+  const [router] = useState(() => new Router(parentRouter, map, defaultRoute));
   
   useEffect(() => {
-    return parentRouter.registerChild(router);
-  }, [router]);
+    parentRouter.updateChild(router);
+    // if and when the map changes, let the router update it's route
+    router.updateMap(map);
+  }, [map]);
 
   return (
-    <RouteContext.Provider value={router} {...other} />
+    <RouteContext.Provider key={router.url} value={router} {...other} />
   );
 }
 
@@ -38,23 +41,30 @@ export function useNavigate() {
   return router.navigate.bind(router);
 }
 
-export function useCurrentRoute<T extends RouteState>() {
-  const router = useContext(RouteContext) as Router<T>;
-  const [route, setCurrentRoute] = useState(() => router.getCurrentRoute());
-  useEffect(() => {
-    return router.subscribe(setCurrentRoute);
-  }, [router]);
+export function useRouteEffect<T>(effect: (route: T) => void, deps: Array<any> = []) {
+  const router = useContext(RouteContext);
 
-  return route;
+  useEffect(() => {
+    return router.subscribe(effect);
+  }, deps);
+}
+
+export function useRouteSelector<T, R>(selector: (route: T) => R, deps: Array<any> = []) {
+  const router = useContext(RouteContext);
+  const [value, setValue] = useState(() => selector(router.getCurrentRoute()));
+
+  useEffect(() => {
+    return router.subscribe((route) => {
+      setValue(selector(route));
+    });
+  }, deps);
+
+  return value;
 }
 
 export function Outlet() {
-  const router = useContext(RouteContext);
-  const route = useCurrentRoute();
-
-  const info = router.getMountInfo();
-
-  return React.createElement(info.route.Component, Object.assign({key: info.mountPath}, info.props));
+  const route = useRouteSelector((res) => res) as ReactElement;
+  return route;
 }
 
 export function withRouter<T extends {}>(initialUrl: string | (() => Promise<string>) = '') {
