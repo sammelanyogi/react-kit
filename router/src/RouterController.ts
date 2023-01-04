@@ -34,14 +34,12 @@ export class RouterController<T> {
       this.currentPath = '/';
     }
 
-    console.log('Navigate back to', this.currentPath);
     this.root.setUrl(this.currentPath.substring(this.root.basePath.length));
   }
 
   navigate(route: RouteController<any>, path: string) {
     const fullPath = normalize(route.basePath, path);
-    console.log('Router navigate to', fullPath, route.basePath, path, this.currentPath);
-
+    
     if (this.currentPath === fullPath) return;
     
     this.stack.push(fullPath);
@@ -53,8 +51,7 @@ export class RouterController<T> {
     // See if we are able to use the given route
 
     const routeToUse = fullPath.startsWith(route.basePath) ? route : this.root;
-    console.log('Using route with base path', routeToUse.basePath);
-
+    
     routeToUse.setUrl(fullPath.substring(routeToUse.basePath.length));
   }
 }

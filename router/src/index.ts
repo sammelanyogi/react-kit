@@ -3,4 +3,4 @@ export { withRouter } from './withRouter.js';
 
 export { RouterDriver } from './types.js';
 export { useCurrentRoute } from './useCurrentRoute.js';
-export { useNavigator } from './useNavigator.js';
+export { useNavigate } from './useNavigate.js';

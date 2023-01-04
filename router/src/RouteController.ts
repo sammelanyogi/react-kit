@@ -33,8 +33,6 @@ export class RouteController<T> {
     this.defaultRoute = defaultRoute;
     
     this.current = this.processMap(path);
-
-    console.log('Created route controller', this);
   }
 
   get currentRoute() {
@@ -102,10 +100,8 @@ export class RouteController<T> {
   }
   
   setUrl(url: string) {
-    console.log('Route setting url', url);
-    const old = this.current;
     this.current = this.processMap(url);
-    console.log('Got current', this.current);
+
     this.setRoute(this.current.route);
     this.setChildUrl(this.current.remaining);
   }

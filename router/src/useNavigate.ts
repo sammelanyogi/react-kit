@@ -2,7 +2,7 @@ import { useContext } from "react";
 import { RouteContext } from "./RouteController.js";
 import { RouterContext } from "./RouterController.js";
 
-export function useNavigator() {
+export function useNavigate() {
   const router = useContext(RouterContext);
   const route = useContext(RouteContext);
 
