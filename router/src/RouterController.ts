@@ -44,7 +44,7 @@ export class RouterController<T> {
     if (this.currentPath === fullPath) return;
   
     // We use the given route if possible otherwiser resort to the root router
-    const routeToUse = fullPath.startsWith(route.basePath) ? route : this.root;
+    const routeToUse = path.startsWith('/') || !fullPath.startsWith(route.basePath) ? this.root : route;
 
     // based on the options see if we need to replace the existing page
     // on the stack
