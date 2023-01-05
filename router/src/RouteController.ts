@@ -63,9 +63,9 @@ export class RouteController<T> {
     }
 
     return {
-      path: null as string,
+      path: url,
       route: this.defaultRoute,
-      remaining: null as string,
+      remaining: '',
     }
   }
 
