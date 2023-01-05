@@ -63,7 +63,7 @@ export class RouteController<T> {
     }
 
     return {
-      path: url,
+      path: '',
       route: this.defaultRoute,
       remaining: '',
     }
