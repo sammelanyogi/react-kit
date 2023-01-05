@@ -4,14 +4,14 @@ import { RouteMap, RouterDriver } from './types.js';
 import { RouteController, RouteContext } from './RouteController.js';
 import { RouterController, RouterContext } from './RouterController.js';
 
-export function withRouter<Props extends {}, T>(driver: RouterDriver, map: RouteMap<T>, defaultRoute: T) {
+export function withRouter<Props extends {}, T>(driver: RouterDriver, map: RouteMap<T>, defaultPath: string) {
   const initialUrl = driver.getInitialUrl();
 
   return (App: React.FC<Props>) => {
     return (props: Props) => {
       const [initial, setInitial] = useState<RouterController<T> | null>(() => {
         return typeof initialUrl === 'string' 
-          ? new RouterController(new RouteController('/', map, initialUrl, defaultRoute))
+          ? new RouterController(new RouteController('/', map, initialUrl, defaultPath))
           : null
       });
       
@@ -20,7 +20,7 @@ export function withRouter<Props extends {}, T>(driver: RouterDriver, map: Route
 
         if (typeof initialUrl !== 'string') {
           initialUrl.then((url) => {
-            router = new RouterController(new RouteController('/', map, url, defaultRoute));
+            router = new RouterController(new RouteController('/', map, url, defaultPath));
             setInitial(router);
           })
         }

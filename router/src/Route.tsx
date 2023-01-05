@@ -4,11 +4,11 @@ import { RouteMap } from "./types.js";
 
 type Props<T> = {
   map: RouteMap<T>,
-  defaultRoute: T,
+  defaultPath: string,
   children: React.ReactElement | Array<React.ReactElement>,
 }
 
-export function Route<T>({ map, defaultRoute, children }: Props<T>) {
+export function Route<T>({ map, defaultPath, children }: Props<T>) {
   const parentRoute = useContext(RouteContext);
 
   const routeController = useMemo(() => {
@@ -17,12 +17,12 @@ export function Route<T>({ map, defaultRoute, children }: Props<T>) {
       base += '/';
     }
 
-    return new RouteController(base, map, parentRoute.childUrl, defaultRoute);
-  }, [map, defaultRoute, parentRoute]);
+    return new RouteController(base, map, parentRoute.childUrl, defaultPath);
+  }, [map, defaultPath, parentRoute]);
   
   useEffect(() => {
     return parentRoute.attach(routeController);
-  }, [map, defaultRoute, parentRoute]);
+  }, [routeController]);
 
   return (
     <RouteContext.Provider value={routeController}>

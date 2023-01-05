@@ -21,7 +21,7 @@ export class RouteController<T> {
 
   private current: Current<T>;
 
-  constructor(basePath: string, map: RouteMap<T>, path: string, defaultRoute: T) {
+  constructor(basePath: string, map: RouteMap<T>, path: string, defaultPath: string) {
     // Make sure the basePath always ends with a single '/';
     if (!basePath.endsWith('/')) {
       this.basePath = `${basePath}/`;
@@ -30,8 +30,12 @@ export class RouteController<T> {
     }
     
     this.map = map;
-    this.defaultRoute = defaultRoute;
-    
+
+    console.log('defaultPath', defaultPath, basePath, path);
+    const defaultRoute = this.findMatch(defaultPath);
+    if (!defaultRoute) throw new Error('Default path not matching in the map');
+
+    this.defaultRoute = defaultRoute.route;
     this.current = this.processMap(path);
   }
 
@@ -47,7 +51,7 @@ export class RouteController<T> {
     return this.current.remaining;
   }
 
-  private processMap(url: string): Current<T> {
+  private findMatch(url: string): Current<T> {
     const keys = Object.keys(this.map);
     for (let i = 0; i < keys.length; i += 1) {
       const key = keys[i];
@@ -61,7 +65,12 @@ export class RouteController<T> {
         }
       }
     }
+    return null;
+  }
 
+  private processMap(url: string): Current<T> {
+    const match = this.findMatch(url);
+    if (match) return match;
     return {
       path: '',
       route: this.defaultRoute,
