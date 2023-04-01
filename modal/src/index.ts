@@ -1,2 +1,3 @@
+export { Modal } from './Modal.js';
+export { withModal } from './withModal.js';
 
-export { Modal, ModalPortal } from './Context';

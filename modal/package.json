@@ -4,7 +4,8 @@
   "description": "Bhoos Modal Library",
   "main": "src/index.ts",
   "peerDependencies": {
-    "react": ">=17"
+    "react": ">=17",
+    "react-native": "*"
   },
   "repository": "https://github.com/bhoos/react-kit",
   "author": "Ranjan Shrestha",
