@@ -8,6 +8,9 @@
     "react-native": "*"
   },
   "repository": "https://github.com/bhoos/react-kit",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "author": "Ranjan Shrestha",
   "license": "MIT"
 }
