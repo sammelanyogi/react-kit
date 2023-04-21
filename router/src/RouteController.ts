@@ -31,8 +31,7 @@ export class RouteController<T> {
     }
     
     this.map = map;
-    path = trimPath(path) || defaultPath;
-    this.current = this.processMap(path);
+    this.current = this.processMap(checkDefault(path, defaultPath));
   }
 
   get currentRoute() {
@@ -102,7 +101,7 @@ export class RouteController<T> {
   
   setUrl(url: string) {
     try {
-      this.current = this.processMap(trimPath(url) || this.defaultPath);
+      this.current = this.processMap(checkDefault(url,this.defaultPath));
       this.setRoute(this.current.route);
 
       // When changing the route, the existing child is not
@@ -117,8 +116,16 @@ export class RouteController<T> {
   }
 }
 
-function trimPath(path: string) {
-  if (path === '/') return '';
-  return path.trim();
+function checkDefault(path: string, defaultPath: string) {
+  path = path.trim();
+  if (!path || path === '/') return defaultPath;
+  let checkPos = 0;
+  if (path.startsWith('/')) checkPos = 1;
+  const separator = path.charAt(checkPos);
+  if (separator === '?' || separator === '#') {
+    return `${defaultPath}${path.substring(checkPos)}`;
+  }
+
+  return path;
 }
 
