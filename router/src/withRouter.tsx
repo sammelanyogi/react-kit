@@ -9,7 +9,7 @@ export function withRouter<Props extends {}, T>(driver: RouterDriver, map: Route
       const [initial, setInitial] = useState<RouterController<T> | null>(null);
       
       useEffect(() => {
-        let router: RouterController<T> = null;
+        let router: RouterController<T>;
 
         const initialUrl = driver.getInitialUrl();
         if (typeof initialUrl !== 'string') {
