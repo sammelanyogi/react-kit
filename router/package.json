@@ -1,6 +1,6 @@
 {
   "name": "@bhoos/react-kit-router",
-  "version": "2.0.0-rc.6",
+  "version": "2.0.0-rc.7",
   "description": "Bhoos Router Library",
   "main": "src/index.ts",
   "peerDependencies": {
