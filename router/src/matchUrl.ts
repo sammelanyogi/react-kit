@@ -38,6 +38,6 @@ export function matchUrl(matchString: string, url: string) {
     params: params,
     queries: queries,
     match: urlParts.slice(0, matchParts.length).join('/'),
-    remaining: urlParts.slice(matchParts.length).join('/') + query ? `?${query}` : '',
+    remaining: urlParts.slice(matchParts.length).join('/') + (query ? `?${query}` : ''),
   }
 }
