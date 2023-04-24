@@ -17,7 +17,9 @@ export function ModalHost() {
           key={info.id} 
           ref={(node) => manager.mount(info.id, node && findNodeHandle(node))}  
           pointerEvents="box-none" 
-          style={StyleSheet.absoluteFill} 
+          style={[StyleSheet.absoluteFill, {
+            zIndex: info.zIndex,
+          }]} 
         />
       ))}
     </>
