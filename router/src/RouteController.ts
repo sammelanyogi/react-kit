@@ -31,7 +31,12 @@ export class RouteController<T> {
     }
     
     this.map = map;
-    this.current = this.processMap(checkDefault(path, defaultPath));
+    try {
+      this.current = this.processMap(checkDefault(path, defaultPath));
+    } catch (err) {
+      console.warn('404 not found. Showing default.', this.basePath, path);
+      this.current = this.processMap(defaultPath);
+    }
   }
 
   get currentRoute() {
@@ -111,7 +116,7 @@ export class RouteController<T> {
         this.setChildUrl(this.current.remaining);
       });
     } catch (err) {
-      console.warn('Url not found', this.basePath, url);
+      console.warn('404 not found. Ignoring', this.basePath, url);
     }
   }
 }
