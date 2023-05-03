@@ -2,6 +2,8 @@
 
 `@bhoos/react-kit-router` is the minimal implementation of router module for react native apps.
 
+This is the documentation for v2.0.0. Documentation for older version is [here](../docs/Router.md)
+
 ## Getting started
 
 There are no dependencies for this package. Just add the package in your existing react-native project.
