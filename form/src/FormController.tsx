@@ -190,6 +190,20 @@ export class FormController<T extends GenericState> {
     return error;
   }
 
+  checkError(name: keyof T) {
+    if (this.state[name] === undefined) return undefined;
+    const def = this.def[name];
+    
+    if (!def) return null;
+    let error: null | Error = null;
+    try {
+      const k = def.parser.parse(def.parser.toText(this.state[name]), this.getState());
+    } catch (err) {
+      error = err as Error;
+    }
+    return error;
+  }
+
   private register<F extends Function>(target: Listeners<T, F>, name: keyof T, listener: F) {
     let list: Array<F> = target[name];
     if (!list) {

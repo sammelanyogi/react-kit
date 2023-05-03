@@ -2,9 +2,9 @@ import React, { useContext, useState, useEffect, useRef, useMemo } from 'react';
 import { FormController, FormContext } from './FormController.js';
 import { GenericState, FormDefinition } from './types.js';
 
-export function useInputError(name: string): undefined | Error {
+export function useInputError(name: string): undefined | null | Error {
   const controller = useContext(FormContext);
-  const [error, setError] = useState<Error>();
+  const [error, setError] = useState<Error | null | undefined>(() => controller.checkError(name));
   useEffect(() => {
     return controller.listenError(name, setError);
   }, [name, controller]);
