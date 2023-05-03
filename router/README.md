@@ -9,7 +9,6 @@ There are no dependencies for this package. Just add the package in your existin
 yarn add @bhoos/react-kit-router
 ```
 
-If you need to implement something like stack navigation, you can use it with react-native Modal, or more awesome alternative (which uses createPortal) `@bhoos/react-kit-modal`.
 
 ## Usage
 
@@ -226,5 +225,7 @@ If sometimes, you need to pop multiple routes from stack, you can give parameter
 
 ## Examples:
 
+If you need to implement something like stack navigation, you can use it with react-native Modal, or more awesome alternative (which uses createPortal) `@bhoos/react-kit-modal`.
+
 - Stack Navigation (with @bhoos/react-kit-modal)
-- Bottom Tab Navigation
+- [Bottom Tab Navigation](/Demo/src/TabRouter.tsx)

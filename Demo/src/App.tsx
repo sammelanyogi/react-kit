@@ -1,11 +1,7 @@
-import React, { Profiler } from 'react';
 import { Route, RouterDriver, useCurrentRoute, useNavigate, withRouter } from '@bhoos/react-kit-router';
-import { TabRouter } from "./TabRouter.js";
-import { Home, homeIcon } from './Home.js';
-import { SafeAreaView, View, StyleSheet, Text, TouchableOpacity, StatusBar, Button } from 'react-native';
-import { Wizard, wizardIcon } from './Wizard.js';
-import { Profile, profileIcon } from './Profile.js';
-import { ModalTest } from './ModalTest.js'
+import React from 'react';
+import { Button, StatusBar, Text, View } from 'react-native';
+import { ModalTest } from './ModalTest.js';
 
 const driver: RouterDriver = {
   getInitialUrl() {
@@ -100,7 +96,7 @@ export const App = withRouter(driver, {
         {/* <TouchableOpacity onPress={() => navigate(-1)} style={{height: 40, justifyContent: 'center', paddingLeft: 50 }}>
           <Text style={{color: 'white'}}>Back</Text>
         </TouchableOpacity> */}
-        {/* <TabRouter 
+        {/* <TabRouter
           tabs={[{
             name: 'home',
             page: Home,
