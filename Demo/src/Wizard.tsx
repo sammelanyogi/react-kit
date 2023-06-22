@@ -1,13 +1,9 @@
-import React, { useCallback } from 'react';
-import { View, Text, TouchableOpacity } from "react-native";
-import { MapRouter, Outlet, Route, RouteState, useNavigate } from '@bhoos/react-kit-router';
+import { Outlet, Route, useNavigate } from '@bhoos/react-kit-router';
+import React from 'react';
+import { Text, TouchableOpacity, View } from "react-native";
 import { H1, H2 } from './TextStyles';
 
 export const wizardIcon = require('./wizard.png');
-
-type WizInfo = RouteState & {
-
-}
 
 export function Page1() {
   const navigate = useNavigate();
@@ -32,24 +28,17 @@ export function Page2() {
   )
 }
 
-const page1 = {
-  Component: Page1,
+const mapRoute = {
+  'page1': () => Page1,
+  'page2': () => Page2
 };
-const page2 = {
-  Component: Page2,
-}
 
 export function Wizard() {
-  const mapRoute = useCallback((router: MapRouter<WizInfo>) => {
-    router.use('page1', page1);
-    router.use('page2', page2);
-    return page1;
-  }, []);
 
   return (
     <View>
       <H1>Wizard</H1>
-      <Route mapRoute={mapRoute}>
+      <Route map={mapRoute} defaultPath='page1'>
         <Outlet />
       </Route>
     </View>

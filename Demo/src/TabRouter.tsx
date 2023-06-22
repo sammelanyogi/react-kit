@@ -1,17 +1,19 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { Text, View, Image, ColorValue, ImageSourcePropType, StyleSheet, TouchableOpacity } from 'react-native';
-import { Route, Outlet, MapRouter, RouteState, useCurrentRoute, useNavigate } from '@bhoos/react-kit-router';
 
-type Tab = { 
-  name: string,
-  title: string,
-  icon: ImageSourcePropType,
-  page: React.FC,
+import { Route, useCurrentRoute, useNavigate } from '@bhoos/react-kit-router';
+
+export type TabInfo = {
+  name: string;
+  title: string;
+  selectedIcon: ImageSourcePropType;
+  unselectedIcon: ImageSourcePropType;
+  page: React.FC;
 };
 
 type Props = {
-  tabs: Array<Tab>,
-  defaultTab: string,
+  tabs: Array<TabInfo>,
+  defaultPath: string,
   tintColor: ColorValue,
 }
 
@@ -36,44 +38,30 @@ const styles = StyleSheet.create({
   }
 });
 
-type TabInfo = RouteState & {
-  name: string,
+function TabOutlet() {
+  const route = useCurrentRoute();
+  return <route.page />;
 }
 
-export function TabRouter({ tabs, defaultTab }: Props) {
-  const mapRoute = useCallback((router: MapRouter<TabInfo>) => {
-    tabs.forEach((tab) => {
-      router.use(tab.name, {
-        name: tab.name,
-        Component: tab.page,
-      });
-    });
-    
-    const defaultRoute = tabs.find(tab => tab.name === defaultTab);
-
-    return {
-      name: defaultRoute.name,
-      Component: defaultRoute.page,
-    }
-  }, [tabs, defaultTab]);
+export function TabRouter({ tabs, defaultPath }: Props) {
+  const mapRoute = useMemo(() => {
+    return tabs.reduce((res, tab) => {
+      res[tab.name] = () => tab;
+      return res;
+    }, {} as { [key: string]: () => TabInfo });
+  }, [tabs]);
 
   return (
-    <Route mapRoute={mapRoute}>
-      {/* <View style={styles.container}> */}
-        <View style={{flex: 1, padding: 10}}>
-          <Outlet />
-        </View>
-        <TabNavigation tabs={tabs} />
-      {/* </View > */}
+    <Route map={mapRoute} defaultPath={defaultPath}>
+      <TabOutlet/>
+      <TabNavigation tabs={tabs} />
     </Route>
   );
 }
 
-function TabNavigation({ tabs }: { tabs: Array<Tab>}) {
-  const route = useCurrentRoute<TabInfo>();
+function TabNavigation({ tabs }: { tabs: Array<TabInfo>}) {
+  const route = useCurrentRoute();
   const navigate = useNavigate();
-
-  console.log('Tab Navigation select', route.name);
 
   return (
     <View style={styles.footer}>
@@ -81,8 +69,8 @@ function TabNavigation({ tabs }: { tabs: Array<Tab>}) {
         const isSelected = tab.name === route.name;
 
         return (
-          <TouchableOpacity onPress={() => navigate(tab.name, { replace: true })} style={styles.tabItem} key={tab.name}>
-            <Image style={[styles.tabImage, { tintColor: isSelected ? 'red' : 'black'}]} source={tab.icon} />
+          <TouchableOpacity onPress={() => navigate(tab.name, { replace: "always" })} style={styles.tabItem} key={tab.name}>
+            <Image style={[styles.tabImage, { tintColor: isSelected ? 'red' : 'black'}]} source={isSelected ? tab.selectedIcon: tab.unselectedIcon} />
             <Text style={[styles.tabText, { color: isSelected ? 'red' : 'black'}]} allowFontScaling={false}>{tab.title}</Text>
           </TouchableOpacity>
         );
