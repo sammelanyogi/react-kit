@@ -3,10 +3,10 @@ import { RouteMap, SetRoute } from './types.js';
 import { matchUrl } from './matchUrl.js';
 
 type Current<T> = {
-  path: string,
-  route: T,
-  remaining: string,
-}
+  path: string;
+  route: T;
+  remaining: string;
+};
 
 export const RouteContext = createContext<RouteController<any>>(null as any);
 
@@ -14,14 +14,22 @@ export class RouteController<T> {
   public readonly basePath: string;
 
   private children: Array<RouteController<any>> = [];
-  private routeListeners: Array<SetRoute<T>> = [];  
+  private parent?: RouteController<any>;
+  private routeListeners: Array<SetRoute<T>> = [];
 
   private readonly map: RouteMap<T>;
   private readonly defaultPath: string;
 
   private current: Current<T>;
 
-  constructor(basePath: string, map: RouteMap<T>, path: string, defaultPath: string) {
+  constructor(
+    basePath: string,
+    map: RouteMap<T>,
+    path: string,
+    defaultPath: string,
+    parentRoute?: RouteController<any>,
+  ) {
+    this.parent = parentRoute;
     this.defaultPath = defaultPath;
     // Make sure the basePath always ends with a single '/';
     if (!basePath.endsWith('/')) {
@@ -29,7 +37,7 @@ export class RouteController<T> {
     } else {
       this.basePath = basePath;
     }
-    
+
     this.map = map;
     try {
       this.current = this.processMap(checkDefault(path, defaultPath));
@@ -41,6 +49,10 @@ export class RouteController<T> {
 
   get currentRoute() {
     return this.current.route;
+  }
+
+  get parentRoute() {
+    return this.parent;
   }
 
   get currentPath() {
@@ -55,14 +67,14 @@ export class RouteController<T> {
     const keys = Object.keys(this.map);
     for (let i = 0; i < keys.length; i += 1) {
       const key = keys[i];
-      
+
       const match = matchUrl(key, url);
       if (match) {
         return {
           path: match.match,
           route: this.map[key](match.params, match.queries),
           remaining: match.remaining,
-        }
+        };
       }
     }
     return null;
@@ -81,7 +93,7 @@ export class RouteController<T> {
       if (idx >= 0) {
         this.children.splice(idx, 1);
       }
-    }
+    };
   }
 
   subscribe(setRoute: SetRoute<T>) {
@@ -91,22 +103,22 @@ export class RouteController<T> {
       if (idx >= 0) {
         this.routeListeners.splice(idx, 1);
       }
-    }
+    };
   }
 
   private setChildUrl(url: string) {
     this.children.forEach(controller => {
       controller.setUrl(url || '');
-    })
+    });
   }
 
   private setRoute(route: T) {
     this.routeListeners.forEach(l => l(() => route));
   }
-  
+
   setUrl(url: string) {
     try {
-      this.current = this.processMap(checkDefault(url,this.defaultPath));
+      this.current = this.processMap(checkDefault(url, this.defaultPath));
       this.setRoute(this.current.route);
 
       // When changing the route, the existing child is not
@@ -133,4 +145,3 @@ function checkDefault(path: string, defaultPath: string) {
 
   return path;
 }
-
