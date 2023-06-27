@@ -1,7 +1,6 @@
-import React, { useEffect, useRef, useState, useContext } from 'react';
-import { View } from 'react-native';
-import { SafeAreaView, Button, Text } from 'react-native';
-import { withModal, Modal } from '@bhoos/react-kit-modal';
+import { Modal, withModal } from '@bhoos/react-kit-modal';
+import React, { useContext } from 'react';
+import { Button, SafeAreaView, Text, View } from 'react-native';
 
 const Context = React.createContext({ state: '' });
 

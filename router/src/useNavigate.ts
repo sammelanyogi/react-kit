@@ -8,10 +8,10 @@ export function useNavigate() {
   const route = useContext(RouteContext);
 
   return (path: string | number, options?: NavigationOptions) => {
-    if (typeof path === 'number') {
-      router.navigateBack(-1 * path);
+    if (typeof path === "number") {
+      router.navigateBack(-1 * path, route);
     } else {
       router.navigate(route, path, options);
     }
-  }
+  };
 }

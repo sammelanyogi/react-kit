@@ -1,8 +1,11 @@
 {
   "name": "@bhoos/react-kit-form",
-  "version": "1.0.0-rc.1",
+  "version": "1.0.0-rc.4",
   "description": "Bhoos Form Library",
   "main": "src/index.ts",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "peerDependencies": {
     "react": ">=17"
   },

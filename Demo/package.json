@@ -10,9 +10,9 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@bhoos/react-kit-form": "^1.0.0-rc.1",
-    "@bhoos/react-kit-modal": "^1.0.0-rc.1",
-    "@bhoos/react-kit-router": "^1.0.0-rc.2",
+    "@bhoos/react-kit-form": "^1.0.0-rc.4",
+    "@bhoos/react-kit-modal": "^1.0.0-rc.3",
+    "@bhoos/react-kit-router": "^2.0.0-rc.8",
     "react": "18.0.0",
     "react-native": "0.69.3"
   },

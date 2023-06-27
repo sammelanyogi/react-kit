@@ -3,44 +3,56 @@ import { RouteMap, SetRoute } from './types.js';
 import { matchUrl } from './matchUrl.js';
 
 type Current<T> = {
-  path: string,
-  route: T,
-  remaining: string,
-}
+  path: string;
+  route: T;
+  remaining: string;
+};
 
-export const RouteContext = createContext<RouteController<any>>(null);
+export const RouteContext = createContext<RouteController<any>>(null as any);
 
 export class RouteController<T> {
   public readonly basePath: string;
 
   private children: Array<RouteController<any>> = [];
-  private routeListeners: Array<SetRoute<T>> = [];  
+  private parent?: RouteController<any>;
+  private routeListeners: Array<SetRoute<T>> = [];
 
   private readonly map: RouteMap<T>;
-  private readonly defaultRoute: T;
+  private readonly defaultPath: string;
 
   private current: Current<T>;
 
-  constructor(basePath: string, map: RouteMap<T>, path: string, defaultPath: string) {
+  constructor(
+    basePath: string,
+    map: RouteMap<T>,
+    path: string,
+    defaultPath: string,
+    parentRoute?: RouteController<any>,
+  ) {
+    this.parent = parentRoute;
+    this.defaultPath = defaultPath;
     // Make sure the basePath always ends with a single '/';
     if (!basePath.endsWith('/')) {
       this.basePath = `${basePath}/`;
     } else {
       this.basePath = basePath;
     }
-    
+
     this.map = map;
-
-    console.log('defaultPath', defaultPath, basePath, path);
-    const defaultRoute = this.findMatch(defaultPath);
-    if (!defaultRoute) throw new Error('Default path not matching in the map');
-
-    this.defaultRoute = defaultRoute.route;
-    this.current = this.processMap(path);
+    try {
+      this.current = this.processMap(checkDefault(path, defaultPath));
+    } catch (err) {
+      console.warn('404 not found. Showing default.', this.basePath, path);
+      this.current = this.processMap(defaultPath);
+    }
   }
 
   get currentRoute() {
     return this.current.route;
+  }
+
+  get parentRoute() {
+    return this.parent;
   }
 
   get currentPath() {
@@ -51,18 +63,18 @@ export class RouteController<T> {
     return this.current.remaining;
   }
 
-  private findMatch(url: string): Current<T> {
+  private findMatch(url: string): Current<T> | null {
     const keys = Object.keys(this.map);
     for (let i = 0; i < keys.length; i += 1) {
       const key = keys[i];
-      
+
       const match = matchUrl(key, url);
       if (match) {
         return {
           path: match.match,
           route: this.map[key](match.params, match.queries),
           remaining: match.remaining,
-        }
+        };
       }
     }
     return null;
@@ -71,11 +83,7 @@ export class RouteController<T> {
   private processMap(url: string): Current<T> {
     const match = this.findMatch(url);
     if (match) return match;
-    return {
-      path: '',
-      route: this.defaultRoute,
-      remaining: '',
-    }
+    throw new Error('404');
   }
 
   attach(child: RouteController<any>) {
@@ -85,7 +93,7 @@ export class RouteController<T> {
       if (idx >= 0) {
         this.children.splice(idx, 1);
       }
-    }
+    };
   }
 
   subscribe(setRoute: SetRoute<T>) {
@@ -95,24 +103,45 @@ export class RouteController<T> {
       if (idx >= 0) {
         this.routeListeners.splice(idx, 1);
       }
-    }
+    };
   }
 
   private setChildUrl(url: string) {
     this.children.forEach(controller => {
       controller.setUrl(url || '');
-    })
+    });
   }
 
   private setRoute(route: T) {
     this.routeListeners.forEach(l => l(() => route));
   }
-  
-  setUrl(url: string) {
-    this.current = this.processMap(url);
 
-    this.setRoute(this.current.route);
-    this.setChildUrl(this.current.remaining);
+  setUrl(url: string) {
+    try {
+      this.current = this.processMap(checkDefault(url, this.defaultPath));
+      this.setRoute(this.current.route);
+
+      // When changing the route, the existing child is not
+      // unmounted immediately and received the remaining
+      // url. So, changing the child url in the next event loop
+      setImmediate(() => {
+        this.setChildUrl(this.current.remaining);
+      });
+    } catch (err) {
+      console.warn('404 not found. Ignoring', this.basePath, url);
+    }
   }
 }
 
+function checkDefault(path: string, defaultPath: string) {
+  path = path.trim();
+  if (!path || path === '/') return defaultPath;
+  let checkPos = 0;
+  if (path.startsWith('/')) checkPos = 1;
+  const separator = path.charAt(checkPos);
+  if (separator === '?' || separator === '#') {
+    return `${defaultPath}${path.substring(checkPos)}`;
+  }
+
+  return path;
+}

@@ -17,7 +17,8 @@ export class ModalManager {
    */
   readonly modals: Array<{
     id: string,
-    setNode: (node: number) => void
+    setNode: (node: number) => void,
+    zIndex?: number,
   }> = [];
 
   /**
@@ -34,11 +35,12 @@ export class ModalManager {
    * @param setNode 
    * @returns 
    */
-  register(setNode: (node: number) => void) {
+  register(setNode: (node: number) => void, zIndex?: number) {
     const id = `modal${++this.serial}`;
     const obj = {
       id,
-      setNode
+      setNode,
+      zIndex,
     };
     this.modals.push(obj);
 
