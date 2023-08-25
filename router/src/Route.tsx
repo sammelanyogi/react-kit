@@ -1,5 +1,7 @@
-import React, { useEffect, useMemo, useContext } from 'react';
-import { RouteController, RouteContext } from './RouteController.js';
+import React, { useContext, useEffect, useMemo } from 'react';
+
+import { RouteContext, RouteController } from './RouteController.js';
+import { RouterContext } from './RouterController.js';
 import { RouteMap } from './types.js';
 
 type Props<T> = {
@@ -10,17 +12,22 @@ type Props<T> = {
 
 export function Route<T>({ map, defaultPath, children }: Props<T>) {
   const parentRoute = useContext(RouteContext);
+  const mainController = useContext(RouterContext);
 
   const routeController = useMemo(() => {
-    let base = `${parentRoute.basePath}${parentRoute.currentPath}`;
-    if (!base.endsWith('/')) {
-      base += '/';
-    }
-
-    return new RouteController(base, map, parentRoute.childUrl, defaultPath, parentRoute);
+    return new RouteController(
+      parentRoute.fullPath,
+      map,
+      parentRoute.childUrl,
+      defaultPath,
+      parentRoute,
+    );
   }, [map, defaultPath, parentRoute]);
 
   useEffect(() => {
+    if (defaultPath) {
+      mainController.updateDefaultPath(defaultPath, routeController.basePath);
+    }
     return parentRoute.attach(routeController);
   }, [routeController]);
 

@@ -59,6 +59,18 @@ export class RouteController<T> {
     return this.current.path;
   }
 
+  get childPaths() {
+    return Object.keys(this.map);
+  }
+
+  get fullPath() {
+    const fullpath = this.basePath + this.current.path;
+    if (!fullpath.endsWith('/')) {
+      return fullpath + '/';
+    }
+    return fullpath;
+  }
+
   get childUrl() {
     return this.current.remaining;
   }
@@ -120,13 +132,7 @@ export class RouteController<T> {
     try {
       this.current = this.processMap(checkDefault(url, this.defaultPath));
       this.setRoute(this.current.route);
-
-      // When changing the route, the existing child is not
-      // unmounted immediately and received the remaining
-      // url. So, changing the child url in the next event loop
-      setImmediate(() => {
-        this.setChildUrl(this.current.remaining);
-      });
+      this.setChildUrl(this.current.remaining);
     } catch (err) {
       console.warn('404 not found. Ignoring', this.basePath, url);
     }

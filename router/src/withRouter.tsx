@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
+
+import { RouteContext, RouteController } from './RouteController.js';
+import { RouterContext, RouterController } from './RouterController.js';
 import { RouteMap, RouterDriver } from './types.js';
-import { RouteController, RouteContext } from './RouteController.js';
-import { RouterController, RouterContext } from './RouterController.js';
 
 export function withRouter<Props extends {}, T>(
   driver: RouterDriver,
   map: RouteMap<T>,
   defaultPath: string,
+  onRouteChange?: (url: string) => void,
 ) {
   return (App: React.FC<Props>) => {
     return (props: Props) => {
@@ -18,11 +20,17 @@ export function withRouter<Props extends {}, T>(
         const initialUrl = driver.getInitialUrl();
         if (typeof initialUrl !== 'string') {
           initialUrl.then(url => {
-            router = new RouterController(new RouteController('/', map, url, defaultPath));
+            router = new RouterController(
+              new RouteController('/', map, url, defaultPath),
+              onRouteChange,
+            );
             setInitial(router);
           });
         } else {
-          router = new RouterController(new RouteController('/', map, initialUrl, defaultPath));
+          router = new RouterController(
+            new RouteController('/', map, initialUrl, defaultPath),
+            onRouteChange,
+          );
           setInitial(router);
         }
 
