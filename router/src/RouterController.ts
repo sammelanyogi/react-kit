@@ -115,7 +115,9 @@ function cleanPath(path: string) {
 }
 
 // Checks if route are the same based on remaining routes
-// For Ex:: ab/cd and ab are same route but ab/cd and ab
+// For Ex:: ab/cd and ab are same route but ab/cd and ab/ef are
+// different routes
+// and ab/cd?q=20 and ab are same routes
 
 function routeEqual(r1: string, r2: string) {
   const v1 = cleanPath(r1)
