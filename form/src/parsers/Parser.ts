@@ -7,7 +7,7 @@ import { GenericState } from '../types.js';
 export class Parser<T> {
   private parsers: Array<(value: any, state: {}) => any> = [];
 
-  // Function to convert original value to text input 
+  // Function to convert original value to text input
   toText(value: T): string {
     return value === undefined || value === null ? '' : String(value);
   }
@@ -34,10 +34,10 @@ export class Parser<T> {
     }, input) as never as T;
   }
 
-  required() {
+  required(errorMsg?: string) {
     this.pre((value: string) => {
       const v = value.trim();
-      if (v.length === 0) throw new Error('Value is required');
+      if (v.length === 0) throw new Error(errorMsg || 'Value is required');
       return v;
     });
 
