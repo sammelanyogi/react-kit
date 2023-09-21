@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { TextParser } from './parsers';
 import { GenericState, FormDefinition } from './types.js';
 
@@ -8,11 +8,11 @@ function toText(k: any): string {
 }
 
 const DefaultDef = {
-  parser: new TextParser()
+  parser: new TextParser(),
 };
 
 type Listeners<T, F extends Function> = {
-  [K in keyof T]?: Array<F>
+  [K in keyof T]?: Array<F>;
 };
 
 export class FormController<T extends GenericState> {
@@ -26,7 +26,7 @@ export class FormController<T extends GenericState> {
    * Keep track of raw input data as provided by the
    * user
    */
-  private inputs: {[K in keyof T]?: string};
+  private inputs: { [K in keyof T]?: string };
 
   /**
    * The parsers defined for this form
@@ -71,7 +71,12 @@ export class FormController<T extends GenericState> {
    */
   private errorHandler: (err: Error) => void;
 
-  constructor(def: FormDefinition<T>, initialState?: Partial<T>, action?: string, parent?: FormController<any>) {
+  constructor(
+    def: FormDefinition<T>,
+    initialState?: Partial<T>,
+    action?: string,
+    parent?: FormController<any>,
+  ) {
     this.def = def;
     this.state = initialState || {};
     this.action = action;
@@ -81,7 +86,9 @@ export class FormController<T extends GenericState> {
     this.errorHandler = parent && parent.errorHandler;
   }
 
-  getState() { return this.state; }
+  getState() {
+    return this.state;
+  }
 
   submit = async () => {
     // Do not submit with a pending submit request
@@ -106,10 +113,11 @@ export class FormController<T extends GenericState> {
 
     try {
       this.submitting = true;
+      // eslint-disable-next-line no-undef
       const res = await fetch(this.action, {
         method: 'POST',
         headers: {
-          "content-type": 'application/json',
+          'content-type': 'application/json',
         },
         body: JSON.stringify(this.state),
       });
@@ -130,31 +138,31 @@ export class FormController<T extends GenericState> {
     } finally {
       this.submitting = false;
     }
-  }
+  };
 
   setResponseHandler(handler: Function) {
     this.responseHandler = handler;
     return () => {
       this.responseHandler = null;
-    }
+    };
   }
 
   setErrorHandler(handler: (err: Error) => void) {
     this.errorHandler = handler;
     return () => {
       this.errorHandler = this.parent ? this.parent.errorHandler : null;
-    }
+    };
   }
 
   get<K extends keyof T>(name: K, defaultValue?: T[K]): T[K] | undefined {
     const res = this.state[name];
-    return (res === undefined) ? defaultValue : res;
+    return res === undefined ? defaultValue : res;
   }
 
   set<K extends keyof T>(name: K, newValue: T[K]) {
     // Object only if value changes
     if (newValue === this.state[name]) return;
-    this.state = Object.assign({}, this.state, {[name]: newValue});
+    this.state = Object.assign({}, this.state, { [name]: newValue });
     const listeners = this.listeners[name];
     if (listeners) listeners.forEach(l => l(newValue));
   }
@@ -193,11 +201,11 @@ export class FormController<T extends GenericState> {
   checkError(name: keyof T) {
     if (this.state[name] === undefined) return undefined;
     const def = this.def[name];
-    
+
     if (!def) return null;
     let error: null | Error = null;
     try {
-      const k = def.parser.parse(def.parser.toText(this.state[name]), this.getState());
+      def.parser.parse(def.parser.toText(this.state[name]), this.getState());
     } catch (err) {
       error = err as Error;
     }
@@ -216,13 +224,29 @@ export class FormController<T extends GenericState> {
       const idx = list.indexOf(listener);
       list.splice(idx, 1);
       if (list.length === 0) {
-        delete this.listeners[name];
+        delete target[name];
       }
-    }
+    };
   }
 
   listenError(name: keyof T, listener: (err: Error) => void) {
     return this.register(this.errorListeners, name, listener);
+  }
+
+  listenErrors(errs: { [K in keyof T]: (err: Error) => void }) {
+    Object.entries(errs).forEach(([name, listener]) => {
+      if (this.errorListeners[name]) {
+        this.errorListeners[name].push(listener);
+      } else {
+        this.errorListeners[name as keyof T] = [listener];
+      }
+    });
+
+    return () => {
+      Object.entries(errs).forEach(([name, listener]) => {
+        this.errorListeners[name as keyof T] = this.errorListeners[name].filter(l => l != listener);
+      });
+    };
   }
 
   listen<K extends keyof T>(name: K, listener: (value: T[K]) => void) {
@@ -232,15 +256,16 @@ export class FormController<T extends GenericState> {
 
 export const FormContext = React.createContext(new FormController<any>({}));
 
+export const useFormContext = () => {
+  const ctx = useContext(FormContext);
+  return ctx;
+};
+
 type Props<T extends GenericState> = {
   controller: FormController<T>;
   children: React.ReactNode;
 };
 
 export function Form<T extends GenericState>({ controller, children }: Props<T>) {
-  return (
-    <FormContext.Provider value={controller}>
-      {children}
-    </FormContext.Provider>
-  );
+  return <FormContext.Provider value={controller}>{children}</FormContext.Provider>;
 }
