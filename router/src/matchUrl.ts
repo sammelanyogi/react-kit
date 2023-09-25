@@ -1,10 +1,10 @@
 /**
  * Utility function to parse the url and match it with the
  * source string.
- * 
- * @param matchString 
- * @param url 
- * @returns 
+ *
+ * @param matchString
+ * @param url
+ * @returns
  */
 export function matchUrl(matchString: string, url: string) {
   const [path, query] = url.split('?', 2);
@@ -14,7 +14,7 @@ export function matchUrl(matchString: string, url: string) {
   const urlParts = path.split('/').filter(k => !!k);
 
   if (urlParts.length < matchParts.length) return null;
-  
+
   const params: Record<string, string> = {};
   for (let i = 0; i < matchParts.length; i += 1) {
     const matchPart = matchParts[i];
@@ -39,5 +39,5 @@ export function matchUrl(matchString: string, url: string) {
     queries: queries,
     match: urlParts.slice(0, matchParts.length).join('/'),
     remaining: urlParts.slice(matchParts.length).join('/') + (query ? `?${query}` : ''),
-  }
+  };
 }

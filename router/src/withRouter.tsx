@@ -33,7 +33,6 @@ export function withRouter<Props extends {}, T>(
           );
           setInitial(router);
         }
-
         return driver.subscribe(url => {
           if (router) {
             router.navigate(router.root, url);

@@ -19,7 +19,9 @@ export class RouterController<T> {
 
   constructor(root: RouteController<T>, onRouteChange?: RouteChangeCB) {
     this.root = root;
-    this.onRouteChange = onRouteChange;
+    if (onRouteChange) {
+      this.onRouteChange = onRouteChange;
+    }
   }
 
   updateDefaultPath(defaultPath: string, basePath: string) {
@@ -46,10 +48,10 @@ export class RouterController<T> {
     while (routeToUse && !fullPath.includes(routeToUse.basePath.slice(0, -1))) {
       routeToUse = routeToUse.parentRoute;
     }
-
-    const path = fullPath.substring(routeToUse.basePath.length);
     // if parent route is not found then use root route
     routeToUse = routeToUse || this.root;
+
+    const path = fullPath.substring(routeToUse.basePath.length);
     routeToUse.setUrl(path);
     this.onRouteChange(fullPath, BACK);
   }
@@ -75,7 +77,9 @@ export class RouterController<T> {
         break;
       }
       routeToUse = routeToUse.parentRoute;
-      relativePath = fullPath.substring(routeToUse.basePath.length);
+      if (routeToUse) {
+        relativePath = fullPath.substring(routeToUse.basePath.length);
+      }
     }
 
     // if parent route is not found then use root route
@@ -95,6 +99,8 @@ export class RouterController<T> {
       if (idx === -1) {
         this.stack.push(fullPath);
       }
+      const path = fullPath.substring(routeToUse.basePath.length);
+      routeToUse.setShallowUrl(path);
     } else {
       this.stack.push(fullPath);
       // Limit the stack size to 100

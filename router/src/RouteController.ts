@@ -6,6 +6,7 @@ type Current<T> = {
   path: string;
   route: T;
   remaining: string;
+  params: Record<string, string>;
 };
 
 export const RouteContext = createContext<RouteController<any>>(null as any);
@@ -16,6 +17,7 @@ export class RouteController<T> {
   private children: Array<RouteController<any>> = [];
   private parent?: RouteController<any>;
   private routeListeners: Array<SetRoute<T>> = [];
+  private params: Record<string, string> = {};
 
   private readonly map: RouteMap<T>;
   private readonly defaultPath: string;
@@ -37,6 +39,12 @@ export class RouteController<T> {
     } else {
       this.basePath = basePath;
     }
+    if (parentRoute) {
+      this.params = {
+        ...getParamsFromRoute(parentRoute.routeKeys, parentRoute.currentPath),
+        ...parentRoute.accumulatedParams,
+      };
+    }
 
     this.map = map;
     try {
@@ -47,6 +55,9 @@ export class RouteController<T> {
     }
   }
 
+  get routeKeys() {
+    return Object.keys(this.map);
+  }
   get currentRoute() {
     return this.current.route;
   }
@@ -57,6 +68,10 @@ export class RouteController<T> {
 
   get currentPath() {
     return this.current.path;
+  }
+
+  get currentObj() {
+    return this.current;
   }
 
   get childPaths() {
@@ -75,17 +90,23 @@ export class RouteController<T> {
     return this.current.remaining;
   }
 
+  get accumulatedParams() {
+    return this.params;
+  }
+
   private findMatch(url: string): Current<T> | null {
     const keys = Object.keys(this.map);
     for (let i = 0; i < keys.length; i += 1) {
       const key = keys[i];
 
       const match = matchUrl(key, url);
+
       if (match) {
         return {
           path: match.match,
-          route: this.map[key](match.params, match.queries),
+          route: this.map[key]({ ...this.params, ...match.params }, match.queries),
           remaining: match.remaining,
+          params: match.params,
         };
       }
     }
@@ -128,6 +149,14 @@ export class RouteController<T> {
     this.routeListeners.forEach(l => l(() => route));
   }
 
+  setShallowUrl(url: string) {
+    try {
+      this.current = this.processMap(checkDefault(url, this.defaultPath));
+    } catch (err) {
+      console.warn('404 not found. Ignoring', this.basePath, url);
+    }
+  }
+
   setUrl(url: string) {
     try {
       this.current = this.processMap(checkDefault(url, this.defaultPath));
@@ -137,6 +166,28 @@ export class RouteController<T> {
       console.warn('404 not found. Ignoring', this.basePath, url);
     }
   }
+}
+
+function getParamsFromRoute(routesKeys: string[], currentPath: string) {
+  if (routesKeys.includes(currentPath)) {
+    return {};
+  }
+  const params: Record<string, string> = {};
+  routesKeys.forEach(val => {
+    const parts = val.split('/');
+    const pathParts = currentPath.split('/');
+    for (let i = 0; i < parts.length; i++) {
+      if (parts[i].startsWith(':')) {
+        params[parts[i].slice(1)] = pathParts[i];
+        continue;
+      }
+      if (parts[i] !== pathParts[i]) {
+        return;
+      }
+    }
+    return val.startsWith(':');
+  });
+  return params;
 }
 
 function checkDefault(path: string, defaultPath: string) {
