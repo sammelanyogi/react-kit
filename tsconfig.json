@@ -15,6 +15,6 @@
     "outDir": "dist",
     "sourceMap": true
   },
-  "include": ["**/src/**/*.ts"],
+  "include": ["**/src/**/*.ts", "form/src/FormController.tsx"],
   "exclude": ["node_modules", "**/*.spec.ts"]
 }
