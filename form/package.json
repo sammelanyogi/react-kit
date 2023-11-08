@@ -1,6 +1,6 @@
 {
   "name": "@bhoos/react-kit-form",
-  "version": "2.0.0-rc.1",
+  "version": "2.0.0-rc.2",
   "description": "Bhoos Form Library",
   "main": "src/index.ts",
   "publishConfig": {
