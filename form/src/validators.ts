@@ -15,18 +15,20 @@ export function isRequired(errorMsg: ErrorMsg) {
 }
 
 export function isNumber(errorMsg: ErrorMsg) {
-  return (value: string, name: string) => {
+  return (value: string | undefined, name: string) => {
     if (!value || isNaN(Number(value))) {
       throw new ValidationError(name, errorMsg);
     }
+    return value;
   };
 }
 
 export function isInteger(errorMsg: ErrorMsg) {
-  return (value: string, name: string) => {
+  return (value: string | undefined, name: string) => {
     if (!value || !(Number.isInteger(parseFloat(value)) && parseFloat(value) > 0)) {
       throw new ValidationError(name, errorMsg);
     }
+    return value;
   };
 }
 
@@ -58,7 +60,7 @@ export function minValue(x: number, errorMsg: ErrorMsg) {
 }
 
 export function maxValue(x: number, errorMsg: ErrorMsg) {
-  return (value: string, name: string) => {
+  return (value: string | undefined, name: string) => {
     if (parseFloat(value) > x) {
       throw new ValidationError(name, errorMsg);
     }
