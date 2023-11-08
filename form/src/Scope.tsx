@@ -1,7 +1,7 @@
-import React, {createContext, useContext} from 'react';
+import React, { createContext, useContext } from 'react';
 
 const ScopeContext = createContext(
-  null as unknown as {validator: (state: any) => any; inputs?: string[]},
+  null as unknown as { validator: (state: any) => any; inputs?: string[] },
 );
 
 type ScopeProps = {
@@ -9,15 +9,15 @@ type ScopeProps = {
   children: React.ReactNode;
 };
 
-export function Scope({validator, children}: ScopeProps) {
-  return (
-    <ScopeContext.Provider value={{validator}}>
-      {children}
-    </ScopeContext.Provider>
-  );
+export function Scope({ validator, children }: ScopeProps) {
+  return <ScopeContext.Provider value={{ validator }}>{children}</ScopeContext.Provider>;
 }
 
 export const useScopeContext = () => {
-  const ctx = useContext(ScopeContext);
-  return ctx;
+  try {
+    const ctx = useContext(ScopeContext);
+    return ctx;
+  } catch (e) {
+    return undefined;
+  }
 };

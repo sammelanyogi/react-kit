@@ -1,38 +1,55 @@
 import {
-  GenericState,
+  FormDef,
+  FormValidatorFunction,
   Listener,
-  Listeners,
   ValidationError,
   ValidatorFunction,
 } from './types';
 
-export class Controller<T extends GenericState> {
-  private state: T;
-  private inputs: GenericState;
+export class Controller<T extends FormDef, S = any> {
+  private inputs: { [key in keyof T]: T[key]['value'] };
 
-  private transformer: (data: T) => any;
+  private transformer: (data: { [key in keyof T]: T[key]['value'] } | {}) => S;
 
-  private inputListeners: Listeners<any>;
-  private errorListeners: Listeners<ValidationError | undefined>;
-  private validators: {[key: string]: Array<ValidatorFunction>};
+  private inputListeners: { [K in keyof T]: Array<Listener<T[K]['value']>> };
+  private errorListeners: { [K in keyof T]: Array<Listener<ValidationError | undefined>> };
 
-  constructor(initialState: any, transformer: (data: T) => any) {
-    this.state = (initialState as T) || {};
-    this.inputs = initialState || {};
+  private validators: { [key in keyof T]: Array<ValidatorFunction<T>> };
+  private finalFormValidator?: FormValidatorFunction<S>;
+  private onCommit?: (formData: any) => void;
 
-    this.inputListeners = {};
-    this.errorListeners = {};
-    this.validators = {};
+  constructor(
+    initialState: { [key in keyof T]: T[string]['value'] } | {},
+    transformer: (data: { [key in keyof T]: T[string]['value'] }) => S,
+    meta: { validator?: FormValidatorFunction<S>; onCommit?: (formData: any) => void } = undefined,
+  ) {
+    this.inputs = initialState || ({} as any);
+
+    this.inputListeners = {} as any;
+    this.errorListeners = {} as any;
+    this.validators = {} as any;
+    this.finalFormValidator = meta?.validator;
+    this.onCommit = meta?.onCommit;
 
     this.transformer = transformer;
   }
 
-  get currentState() {
-    return this.state;
+  get data() {
+    return this.transformer(this.inputs);
   }
 
-  get data() {
-    return this.transformer(this.state);
+  get rawData() {
+    return this.inputs;
+  }
+
+  commit() {
+    if (this.onCommit) {
+      this.onCommit(this.inputs);
+    }
+  }
+
+  get validator() {
+    return this.finalFormValidator;
   }
 
   get tempState() {
@@ -43,7 +60,7 @@ export class Controller<T extends GenericState> {
     return this.validators;
   }
 
-  getValidatorsFor(name: string) {
+  getValidatorsFor<K extends keyof T>(name: K): T[K]['value'] | undefined {
     return this.validators[name];
   }
 
@@ -51,7 +68,7 @@ export class Controller<T extends GenericState> {
     if (!inputs) {
       return this.validators;
     } else {
-      const filteredV: {[key: string]: Array<ValidatorFunction>} = {};
+      const filteredV: { [key: string]: Array<ValidatorFunction<T>> } = {};
       inputs.forEach(input => {
         filteredV[input] = this.validators[input];
       });
@@ -59,49 +76,37 @@ export class Controller<T extends GenericState> {
     }
   }
 
-  setValidatorsFor(name: string, validators: Array<ValidatorFunction>) {
+  setValidatorsFor<K extends keyof T>(name: K, validators: Array<ValidatorFunction<T>>) {
     this.validators[name] = validators;
   }
 
-  setError(name: string, error: ValidationError | undefined) {
+  setError<K extends keyof T>(name: K, error: ValidationError | undefined) {
     this.errorListeners[name]?.forEach(listener => listener(error));
   }
 
-  get<K extends keyof T>(name: K, defaultValue?: T[K]): T[K] | undefined {
-    const res = this.state[name];
+  get<K extends keyof T>(name: K, defaultValue?: T[K]['value']): T[K]['value'] | undefined {
+    const res = this.inputs[name];
     return res === undefined ? defaultValue : res;
   }
 
-  set(name: string, newValue: any) {
+  set<K extends keyof T>(name: K, newValue: T[K]['value']) {
     // Object only if value changes
-    if (newValue === this.state[name]) {
+    if (newValue === this.inputs[name]) {
       return;
     }
-    this.state = Object.assign({}, this.state, {[name]: newValue});
-    const listeners = this.inputListeners[name];
-    if (listeners) {
-      listeners.forEach(l => l(newValue));
-    }
-  }
-
-  getInput<I>(name: string): I {
-    const k = this.inputs[name];
-    return k;
-  }
-
-  setInput<I>(name: string, newValue: I) {
-    this.inputs[name] = newValue;
+    this.inputs = Object.assign({}, this.inputs, { [name]: newValue });
+    this.inputListeners[name]?.forEach(l => l(newValue));
   }
 
   private register<V>(
-    target: Listeners<V>,
+    target: { [K in keyof T]: Array<Listener<T[K]['value']> | ValidationError | undefined> },
     name: keyof T,
     listener: Listener<V>,
   ) {
     let list = target[name as string];
     if (!list) {
       list = [];
-      target[name as string] = list;
+      target[name] = list;
     }
     list.push(listener);
 
@@ -114,10 +119,7 @@ export class Controller<T extends GenericState> {
     };
   }
 
-  listenInput<Key extends keyof T>(
-    name: keyof T,
-    listener: (value: T[Key]) => void,
-  ) {
+  listenInput<Key extends keyof T>(name: keyof T, listener: (value: T[Key]['value']) => void) {
     return this.register(this.inputListeners, name, listener);
   }
 

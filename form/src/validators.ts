@@ -1,4 +1,4 @@
-import {ValidationError} from './types';
+import { ValidationError } from './types';
 
 type ErrorMsg = {
   title?: string;
@@ -6,10 +6,11 @@ type ErrorMsg = {
 };
 
 export function isRequired(errorMsg: ErrorMsg) {
-  return (value: string, name: string) => {
+  return (value: any, name: string) => {
     if (!value || value.length === 0) {
       throw new ValidationError(name, errorMsg);
     }
+    return value;
   };
 }
 
@@ -23,17 +24,14 @@ export function isNumber(errorMsg: ErrorMsg) {
 
 export function isInteger(errorMsg: ErrorMsg) {
   return (value: string, name: string) => {
-    if (
-      !value ||
-      !(Number.isInteger(parseFloat(value)) && parseFloat(value) > 0)
-    ) {
+    if (!value || !(Number.isInteger(parseFloat(value)) && parseFloat(value) > 0)) {
       throw new ValidationError(name, errorMsg);
     }
   };
 }
 
-export function minLength(x: number, errorMsg: ErrorMsg) {
-  return (value: string, name: string) => {
+export function minLength<T extends string | Array<any> = string>(x: number, errorMsg: ErrorMsg) {
+  return (value: T, name: string) => {
     if (!value || value.length < x) {
       throw new ValidationError(name, errorMsg);
     }
@@ -41,10 +39,18 @@ export function minLength(x: number, errorMsg: ErrorMsg) {
   };
 }
 
+export function maxLength<T extends string | Array<any> = string>(x: number, errorMsg: ErrorMsg) {
+  return (value: T, name: string) => {
+    if (!value || value.length > x) {
+      throw new ValidationError(name, errorMsg);
+    }
+    return value;
+  };
+}
+
 export function minValue(x: number, errorMsg: ErrorMsg) {
-  return (value: string, name: string) => {
-    if (parseFloat(value) < x) {
-      console.log('Value', value);
+  return (value: string | undefined, name: string) => {
+    if (!x || parseFloat(value) < x) {
       throw new ValidationError(name, errorMsg);
     }
     return value;

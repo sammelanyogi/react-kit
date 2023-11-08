@@ -1,34 +1,34 @@
-import React, {useContext, createContext, useRef} from 'react';
-import {Controller} from './Controller';
-import {GenericState} from './types';
+import React, { useContext, createContext, useRef } from 'react';
+import { Controller } from './Controller';
+import { FormValidatorFunction, FormDef } from './types';
 
-const FormContext = createContext<Controller<any>>(
-  null as unknown as Controller<any>,
-);
+const FormContext = createContext(null);
 
-export function useFormController<T extends GenericState>(
-  inititalState: any,
-  transform: (data: any) => any,
+export function useFormController<T extends FormDef, S = any>(
+  inititalState: { [key in keyof T]: T[string]['value'] },
+  transform: (data: { [key in keyof T]: T[string]['value'] }) => S,
+  meta?: {
+    validator?: FormValidatorFunction<S>;
+    onCommit?: (formData: T) => void;
+  },
 ) {
-  const ref = useRef<Controller<T> | null>(null);
+  const ref = useRef<Controller<T, S> | null>(null);
   if (!ref.current) {
-    ref.current = new Controller<any>(inititalState, transform);
+    ref.current = new Controller<T, S>(inititalState, transform, meta);
   }
   return ref.current;
 }
 
-type Props<T extends GenericState> = {
-  controller: Controller<T>;
+type Props<T extends FormDef, S> = {
+  controller: Controller<T, S>;
   children: React.ReactNode;
 };
 
-export function Form<T extends GenericState>({controller, children}: Props<T>) {
-  return (
-    <FormContext.Provider value={controller}>{children}</FormContext.Provider>
-  );
+export function Form<T extends FormDef, S>({ controller, children }: Props<T, S>) {
+  return <FormContext.Provider value={controller}>{children}</FormContext.Provider>;
 }
 
-export const useFormContext = () => {
-  const ctx = useContext(FormContext);
+export function useFormContext<T extends FormDef, S>() {
+  const ctx = useContext<Controller<T, S>>(FormContext);
   return ctx;
-};
+}
