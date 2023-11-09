@@ -16,6 +16,9 @@ export function isRequired(errorMsg: ErrorMsg) {
 
 export function isNumber(errorMsg: ErrorMsg) {
   return (value: string | undefined, name: string) => {
+    if (!value) {
+      return value;
+    }
     if (!value || isNaN(Number(value))) {
       throw new ValidationError(name, errorMsg);
     }
@@ -25,6 +28,9 @@ export function isNumber(errorMsg: ErrorMsg) {
 
 export function isInteger(errorMsg: ErrorMsg) {
   return (value: string | undefined, name: string) => {
+    if (!value) {
+      return value;
+    }
     if (!value || !(Number.isInteger(parseFloat(value)) && parseFloat(value) > 0)) {
       throw new ValidationError(name, errorMsg);
     }
@@ -34,6 +40,9 @@ export function isInteger(errorMsg: ErrorMsg) {
 
 export function minLength<T extends string | Array<any> = string>(x: number, errorMsg: ErrorMsg) {
   return (value: T, name: string) => {
+    if (!value) {
+      return value;
+    }
     if (!value || value.length < x) {
       throw new ValidationError(name, errorMsg);
     }
@@ -43,6 +52,9 @@ export function minLength<T extends string | Array<any> = string>(x: number, err
 
 export function maxLength<T extends string | Array<any> = string>(x: number, errorMsg: ErrorMsg) {
   return (value: T, name: string) => {
+    if (!value) {
+      return value;
+    }
     if (!value || value.length > x) {
       throw new ValidationError(name, errorMsg);
     }
@@ -52,6 +64,9 @@ export function maxLength<T extends string | Array<any> = string>(x: number, err
 
 export function minValue(x: number, errorMsg: ErrorMsg) {
   return (value: string | undefined, name: string) => {
+    if (!value) {
+      return value;
+    }
     if (!x || parseFloat(value) < x) {
       throw new ValidationError(name, errorMsg);
     }
@@ -61,6 +76,9 @@ export function minValue(x: number, errorMsg: ErrorMsg) {
 
 export function maxValue(x: number, errorMsg: ErrorMsg) {
   return (value: string | undefined, name: string) => {
+    if (!value) {
+      return value;
+    }
     if (parseFloat(value) > x) {
       throw new ValidationError(name, errorMsg);
     }
