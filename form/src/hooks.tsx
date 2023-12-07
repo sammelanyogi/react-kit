@@ -4,16 +4,16 @@ import { ValidationError, ValidatorFunction } from './types';
 
 export function useFormInput<T, S = any>(
   name: string,
-  metadata: {
-    validators?: ValidatorFunction<T, S>[];
+  metadata?: {
+    validators?: ValidatorFunction<T>[];
     defaultValue?: T;
     errorsAssociated?: string[];
     formDef?: T;
-  } = { validators: [] },
+  },
 ): [v: T, fn: (newVal: T) => void, blr: () => void, fcs: () => void] {
-  const ctx = useFormContext<any, S>();
-  const { validators, defaultValue, errorsAssociated } = metadata;
-  const [value, setValue] = useState<T>(ctx.get(name) || defaultValue);
+  const ctx = useFormContext<S>();
+  const { validators, defaultValue, errorsAssociated } = metadata || {};
+  const [value, setValue] = useState<T>(ctx.get<T>(name) || (defaultValue as T));
 
   const onChangeText = (newVal: T) => {
     setValue(newVal);
@@ -29,7 +29,9 @@ export function useFormInput<T, S = any>(
 
   const onBlur = () => {
     try {
-      validators.forEach(fn => fn(value, name as string, ctx.tempState));
+      if (validators) {
+        validators.forEach(fn => fn(value, name as string, ctx.tempState));
+      }
     } catch (e: any) {
       let vE: ValidationError = e;
       if (!(e instanceof ValidationError)) {
@@ -42,7 +44,9 @@ export function useFormInput<T, S = any>(
   };
 
   useEffect(() => {
-    ctx.setValidatorsFor(name, validators);
+    if (validators && validators.length > 0) {
+      ctx.setValidatorsFor(name, validators);
+    }
   }, [ctx, name, validators]);
 
   useEffect(() => ctx.listenInput(name, setValue), [ctx, name, validators]);
@@ -73,14 +77,14 @@ export function useSetError(name: string) {
 
 export function useFormValue<T = any>(name: string) {
   const form = useFormContext();
-  const [value, setValue] = useState<T>(form.get(name));
+  const [value, setValue] = useState<T | undefined>(form.get<T>(name));
   useEffect(() => form.listenInput(name, setValue), [form, name]);
   return value;
 }
 
 export function useTempInput<T = any>(name: string): [fn: () => void, f: () => boolean] {
   const form = useFormContext();
-  const preservedValue = useRef<T>(form.get(name));
+  const preservedValue = useRef<T>(form.get<T>(name) || null);
 
   const discardChanges = useCallback(() => {
     form.set(name, preservedValue.current);

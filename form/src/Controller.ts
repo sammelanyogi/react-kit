@@ -1,35 +1,41 @@
 import {
-  FormDef,
+  FormInputs,
+  FormMeta,
   FormValidatorFunction,
+  FormValidators,
   Listener,
   ValidationError,
   ValidatorFunction,
 } from './types';
 
-export class Controller<T extends FormDef, S = any> {
-  private inputs: { [key in keyof T]: T[key]['value'] };
+export class Controller<S = any> {
+  private inputs: FormInputs;
 
-  private transformer: (data: { [key in keyof T]: T[key]['value'] } | {}) => S;
+  private transformer: (data: FormInputs | {}) => S;
 
-  private inputListeners: { [K in keyof T]: Array<Listener<T[K]['value']>> };
-  private errorListeners: { [K in keyof T]: Array<Listener<ValidationError | undefined>> };
+  private inputListeners: { [k: string]: Array<Listener<any>> };
+  private errorListeners: { [k: string]: Array<Listener<ValidationError | undefined>> };
 
-  private validators: { [key in keyof T]: Array<ValidatorFunction<T>> };
+  private validators: FormValidators;
   private finalFormValidator?: FormValidatorFunction<S>;
-  private onCommit?: (formData: any) => void;
+  private onCommit?: (formData: FormInputs) => void;
 
   constructor(
-    initialState: { [key in keyof T]: T[string]['value'] } | {},
-    transformer: (data: { [key in keyof T]: T[string]['value'] }) => S,
-    meta: { validator?: FormValidatorFunction<S>; onCommit?: (formData: any) => void } = undefined,
+    initialState: FormInputs | {},
+    transformer: (data: FormInputs) => S,
+    meta?: FormMeta<S> | undefined,
   ) {
     this.inputs = initialState || ({} as any);
 
     this.inputListeners = {} as any;
     this.errorListeners = {} as any;
-    this.validators = {} as any;
     this.finalFormValidator = meta?.validator;
-    this.onCommit = meta?.onCommit;
+    if (meta) {
+      this.validators = meta.inputValidators || {};
+      this.onCommit = meta?.onCommit;
+    } else {
+      this.validators = {};
+    }
 
     this.transformer = transformer;
   }
@@ -60,7 +66,7 @@ export class Controller<T extends FormDef, S = any> {
     return this.validators;
   }
 
-  getValidatorsFor<K extends keyof T>(name: K): T[K]['value'] | undefined {
+  getValidatorsFor<T>(name: string): Array<ValidatorFunction<T>> | undefined {
     return this.validators[name];
   }
 
@@ -68,7 +74,7 @@ export class Controller<T extends FormDef, S = any> {
     if (!inputs) {
       return this.validators;
     } else {
-      const filteredV: { [key: string]: Array<ValidatorFunction<T>> } = {};
+      const filteredV: { [key: string]: Array<ValidatorFunction<any>> } = {};
       inputs.forEach(input => {
         filteredV[input] = this.validators[input];
       });
@@ -76,20 +82,20 @@ export class Controller<T extends FormDef, S = any> {
     }
   }
 
-  setValidatorsFor<K extends keyof T>(name: K, validators: Array<ValidatorFunction<T>>) {
+  setValidatorsFor<T>(name: string, validators: Array<ValidatorFunction<T>>) {
     this.validators[name] = validators;
   }
 
-  setError<K extends keyof T>(name: K, error: ValidationError | undefined) {
+  setError(name: string, error: ValidationError | undefined) {
     this.errorListeners[name]?.forEach(listener => listener(error));
   }
 
-  get<K extends keyof T>(name: K, defaultValue?: T[K]['value']): T[K]['value'] | undefined {
+  get<T>(name: string, defaultValue?: T): T | undefined {
     const res = this.inputs[name];
     return res === undefined ? defaultValue : res;
   }
 
-  set<K extends keyof T>(name: K, newValue: T[K]['value']) {
+  set<T>(name: string, newValue: T) {
     // Object only if value changes
     if (newValue === this.inputs[name]) {
       return;
@@ -98,9 +104,16 @@ export class Controller<T extends FormDef, S = any> {
     this.inputListeners[name]?.forEach(l => l(newValue));
   }
 
+  updateBulk(value: FormInputs) {
+    Object.entries(value).forEach(([name, value]) => {
+      this.inputs[name] = value;
+      this.inputListeners[name]?.forEach(l => l(value));
+    });
+  }
+
   private register<V>(
-    target: { [K in keyof T]: Array<Listener<T[K]['value']> | ValidationError | undefined> },
-    name: keyof T,
+    target: { [k: string]: Array<Listener<any | ValidationError | undefined>> },
+    name: string,
     listener: Listener<V>,
   ) {
     let list = target[name as string];
@@ -119,7 +132,7 @@ export class Controller<T extends FormDef, S = any> {
     };
   }
 
-  listenInput<Key extends keyof T>(name: keyof T, listener: (value: T[Key]['value']) => void) {
+  listenInput<T>(name: string, listener: (value: T) => void) {
     return this.register(this.inputListeners, name, listener);
   }
 

@@ -10,29 +10,21 @@ export class ValidationError extends Error {
     this.title = obj?.title;
   }
 }
-export type ValidatorFunction<T, S = any> = (value: T, name: string, state: S) => T;
+export type ValidatorFunction<T> = (value: T, name: string, state: FormInputs) => T;
 export type FormValidatorFunction<S = any> = (state: S) => boolean;
 
-export type InputField<T = any, S = any> = {
-  value: T;
-  validators: Array<(value: T, name: string, state: S) => T>;
+export type FormValidators = {
+  [k: string]: Array<ValidatorFunction<any>>;
 };
 
-export interface FormDef {
-  [key: string]: InputField;
-}
+export type FormInputs = {
+  [k: string]: any;
+};
 
-// {
-//   firstName: {
-//     type: string,
-//     validators: [function ko list]
-//   },
-//   lastName: {
-//     type: AbortController,
-//     validators: []function
-//   }
-// }
-
-// useFormInput<EditProfileForm>('firstName', [] )
-
-// FileSystemFileEntry()
+export type FormMeta<S> =
+  | {
+      validator?: FormValidatorFunction<S>;
+      inputValidators?: FormValidators;
+      onCommit?: (formData: any) => void;
+    }
+  | undefined;
